@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Login - City ENRO Travel Request{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h4><i class="bi bi-building"></i> City ENRO</h4>
+            <p class="mb-0">Travel Request System</p>
+        </div>
+        <div class="login-body">
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control" id="username" name="username" required autofocus>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                </div>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">Login</button>
+                </div>
+            </form>
+            
+            <hr>
+            
+            <div class="text-center">
+                <p class="mb-2">New user?</p>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-person-plus"></i> Register as Employee
+                </a>
+            </div>
+            
+            <div class="mt-4 text-center text-muted">
+                <small>Default admin: admin / admin123</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
