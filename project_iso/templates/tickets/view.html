@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}View Travel Request #{{ ticket.id }} - City ENRO Travel Request{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="bi bi-ticket-detailed"></i> Travel Request #{{ ticket.id }}</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('tickets.my_tickets') if session.get('role') == 'employee' else url_for('tickets.all_tickets') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Ticket Details -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Request Details</h5>
+                <span class="status-badge status-{{ ticket.status }}">
+                    {{ ticket.status|replace('_', ' ')|title }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong><i class="bi bi-person"></i> Employee:</strong> {{ ticket.user_name }}</p>
+                        <p><strong><i class="bi bi-building"></i> Division:</strong> {{ ticket.division_name }}</p>
+                        <p><strong><i class="bi bi-geo-alt"></i> Destination:</strong> {{ ticket.destination }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong><i class="bi bi-calendar"></i> Start Date:</strong> {{ ticket.start_date.strftime('%Y-%m-%d') if ticket.start_date else '-' }}</p>
+                        <p><strong><i class="bi bi-calendar"></i> End Date:</strong> {{ ticket.end_date.strftime('%Y-%m-%d') if ticket.end_date else '-' }}</p>
+                        <p><strong><i class="bi bi-currency-dollar"></i> Estimated Cost:</strong> ₱{{ "%.2f"|format(ticket.estimated_cost) }}</p>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <p><strong><i class="bi bi-text-paragraph"></i> Purpose:</strong></p>
+                        <div class="bg-light p-3 rounded">
+                            {{ ticket.purpose }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approval History -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Approval History</h5>
+            </div>
+            <div class="card-body">
+                {% if approvals %}
+                <div class="timeline">
+                    {% for approval in approvals %}
+                    <div class="timeline-item mb-3">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                {% if approval.action == 'approved' %}
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>
+                                {% else %}
+                                <i class="bi bi-x-circle-fill text-danger" style="font-size: 1.5rem;"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ approval.approver_name }}</strong>
+                                    <small class="text-muted">{{ approval.created_at.strftime('%Y-%m-%d %H:%M') if approval.created_at else '' }}</small>
+                                </div>
+                                <p class="mb-1">
+                                    <span class="badge bg-{{ 'success' if approval.action == 'approved' else 'danger' }}">
+                                        {{ approval.action|upper }}
+                                    </span>
+                                    <span class="badge bg-{{ 'primary' if approval.level == 'director' else 'info' }}">
+                                        {{ approval.level|replace('_', ' ')|title }}
+                                    </span>
+                                </p>
+                                {% if approval.comments %}
+                                <p class="mb-0 text-muted"><em>"{{ approval.comments }}"</em></p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No approval actions yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Approval/Rejection Form (for directors and final authorizers) -->
+        {% if session.get('role') in ['director', 'final_authorizer', 'admin'] and ticket.status not in ['approved', 'rejected'] %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-gavel"></i> Take Action</h5>
+            </div>
+            <div class="card-body">
+                <!-- Approve Form -->
+                {% if (session.get('role') in ['director', 'admin'] and ticket.status == 'pending') or (session.get('role') == 'final_authorizer' and ticket.status == 'director_approved') %}
+                <form method="POST" action="{{ url_for('tickets.approve', ticket_id=ticket.id) }}" class="mb-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-2">
+                        <label for="approve_comments" class="form-label">Comments (optional)</label>
+                        <textarea class="form-control" id="approve_comments" name="comments" rows="2" 
+                                  placeholder="Add any comments..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Approve
+                    </button>
+                </form>
+                <hr>
+                {% endif %}
+                
+                <!-- Reject Form -->
+                <form method="POST" action="{{ url_for('tickets.reject', ticket_id=ticket.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-2">
+                        <label for="reject_comments" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="reject_comments" name="comments" rows="2" 
+                                  placeholder="Please provide a reason for rejection" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-circle"></i> Reject
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <!-- Status Timeline -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-diagram-3"></i> Status Timeline</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-column">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-{{ 'success' if ticket.status in ['pending', 'director_approved', 'approved'] else 'secondary' }} text-white rounded-circle p-2 me-3" style="width: 32px; height: 32px; text-align: center;">
+                            1
+                        </div>
+                        <div>
+                            <div class="fw-bold">Submitted</div>
+                            <small class="text-muted">Request created</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-{{ 'success' if ticket.status in ['director_approved', 'approved'] else 'secondary' }} text-white rounded-circle p-2 me-3" style="width: 32px; height: 32px; text-align: center;">
+                            2
+                        </div>
+                        <div>
+                            <div class="fw-bold">Director Approval</div>
+                            <small class="text-muted">{{ 'Approved' if ticket.status in ['director_approved', 'approved'] else 'Pending' }}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-{{ 'success' if ticket.status == 'approved' else 'secondary' }} text-white rounded-circle p-2 me-3" style="width: 32px; height: 32px; text-align: center;">
+                            3
+                        </div>
+                        <div>
+                            <div class="fw-bold">Final Authorization</div>
+                            <small class="text-muted">{{ 'Approved' if ticket.status == 'approved' else 'Pending' }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
