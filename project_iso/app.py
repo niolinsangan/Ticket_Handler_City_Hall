@@ -19,7 +19,7 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
     
     # Initialize extensions
-    bcrypt.init_app(app)
+    bcrypt.init_app(a
     csrf.init_app(app)
     
     # Register blueprints
@@ -146,4 +146,4 @@ def init_db(app):
 
 if __name__ == '__main__':
     app = create_app('development')
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000);
