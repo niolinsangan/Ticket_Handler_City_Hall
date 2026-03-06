@@ -19,7 +19,7 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
     
     # Initialize extensions
-    bcrypt.init_app(a
+    bcrypt.init_app(app)
     csrf.init_app(app)
     
     # Register blueprints
@@ -119,8 +119,14 @@ def init_db(app):
         cursor.execute("SELECT COUNT(*) FROM divisions")
         if cursor.fetchone()[0] == 0:
             divisions = [
-                'Administration', 'Finance', 'Operations', 'Human Resources',
-                'IT Services', 'Legal', 'Public Relations', 'Infrastructure'
+                'Forestry Management Services Division',
+                'Wildlife Management Services Division',
+                'Protected Area Management Division',
+                'Mines and Geosciences Management Service Division',
+                'Land Management Services Division',
+                'Environmental Management Services Division',
+                'Environmental Law Enforcement Division',
+                'Administrative Management Services Division'
             ]
             for div in divisions:
                 cursor.execute("INSERT INTO divisions (name) VALUES (%s)", (div,))
@@ -146,4 +152,4 @@ def init_db(app):
 
 if __name__ == '__main__':
     app = create_app('development')
-    app.run(debug=True, host='0.0.0.0', port=5000);
+    app.run(debug=True, host='0.0.0.0', port=5000)
