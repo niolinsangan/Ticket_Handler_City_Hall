@@ -2,6 +2,7 @@
 Script to initialize MySQL database for City ENRO Travel Request System
 """
 import pymysql
+from flask_bcrypt import Bcrypt
 
 
 MYSQL_HOST = 'localhost'
