@@ -60,7 +60,7 @@ echo ========================================
 echo.
 
 :: Open browser to Flask app
-start http://localhost:5000
+start "" "http://localhost:5000"
 
 :: Start Flask app in background using pythonw (no terminal window)
 start "" "c:\Users\Niiyyoooww\Desktop\CITY_HALL_ASSIGNMENT\cvenv\Scripts\pythonw.exe" app.py
