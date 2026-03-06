@@ -7,7 +7,6 @@ from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect
 from config import config
-import pymysql
 
 # Initialize extensions
 bcrypt = Bcrypt()
@@ -38,7 +37,115 @@ def create_app(config_name='default'):
 
 
 def init_db(app):
-    """Initialize database and create tables"""
+    """Initialize database and create tables - supports both MySQL and SQLite"""
+    db_type = app.config.get('DATABASE_TYPE', 'sqlite')
+    
+    if db_type == 'sqlite':
+        init_sqlite_db(app)
+    else:
+        init_mysql_db(app)
+
+
+def init_sqlite_db(app):
+    """Initialize SQLite database"""
+    import sqlite3
+    from flask_bcrypt import Bcrypt
+    
+    db_path = app.config['SQLITE_DATABASE']
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Create divisions table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS divisions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(100) NOT NULL
+        )
+    """)
+    
+    # Create users table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username VARCHAR(50) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            role VARCHAR(50) NOT NULL,
+            division_id INTEGER,
+            full_name VARCHAR(100) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (division_id) REFERENCES divisions(id)
+        )
+    """)
+    
+    # Create tickets table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tickets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            division_id INTEGER NOT NULL,
+            destination VARCHAR(200) NOT NULL,
+            purpose TEXT NOT NULL,
+            start_date DATE NOT NULL,
+            end_date DATE NOT NULL,
+            estimated_cost DECIMAL(10, 2) NOT NULL,
+            status VARCHAR(50) DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (division_id) REFERENCES divisions(id)
+        )
+    """)
+    
+    # Create approvals table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS approvals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_id INTEGER NOT NULL,
+            approver_id INTEGER NOT NULL,
+            level VARCHAR(50) NOT NULL,
+            action VARCHAR(50) NOT NULL,
+            comments TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (ticket_id) REFERENCES tickets(id),
+            FOREIGN KEY (approver_id) REFERENCES users(id)
+        )
+    """)
+    
+    # Insert default divisions
+    cursor.execute("SELECT COUNT(*) FROM divisions")
+    if cursor.fetchone()[0] == 0:
+        divisions = [
+            'Forestry Management Services Division',
+            'Wildlife Management Services Division',
+            'Protected Area Management Division',
+            'Mines and Geosciences Management Service Division',
+            'Land Management Services Division',
+            'Environmental Management Services Division',
+            'Environmental Law Enforcement Division',
+            'Administrative Management Services Division'
+        ]
+        for div in divisions:
+            cursor.execute("INSERT INTO divisions (name) VALUES (?)", (div,))
+    
+    # Insert default admin user if not exists
+    cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
+    if cursor.fetchone()[0] == 0:
+        bcrypt_instance = Bcrypt()
+        hashed = bcrypt_instance.generate_password_hash('admin123').decode('utf-8')
+        cursor.execute(
+            "INSERT INTO users (username, password, role, full_name) VALUES (?, ?, ?, ?)",
+            ('admin', hashed, 'admin', 'System Administrator')
+        )
+    
+    conn.commit()
+    conn.close()
+    print("SQLite database initialized successfully!")
+
+
+def init_mysql_db(app):
+    """Initialize MySQL database"""
+    import pymysql
+    
     try:
         # First connect without database to create it
         conn = pymysql.connect(
@@ -135,8 +242,8 @@ def init_db(app):
         cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
         if cursor.fetchone()[0] == 0:
             from flask_bcrypt import Bcrypt
-            bcrypt = Bcrypt()
-            hashed = bcrypt.generate_password_hash('admin123').decode('utf-8')
+            bcrypt_instance = Bcrypt()
+            hashed = bcrypt_instance.generate_password_hash('admin123').decode('utf-8')
             cursor.execute(
                 "INSERT INTO users (username, password, role, full_name) VALUES (%s, %s, %s, %s)",
                 ('admin', hashed, 'admin', 'System Administrator')
@@ -144,12 +251,13 @@ def init_db(app):
         
         conn.commit()
         conn.close()
-        print("Database initialized successfully!")
+        print("MySQL database initialized successfully!")
         
     except Exception as e:
-        print(f"Database initialization error: {e}")
+        print(f"MySQL database initialization error: {e}")
 
 
 if __name__ == '__main__':
     app = create_app('development')
     app.run(debug=True, host='0.0.0.0', port=5000)
+

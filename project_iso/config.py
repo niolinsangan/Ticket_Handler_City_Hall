@@ -7,6 +7,9 @@ class Config:
     """Base configuration"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     
+    # Database choice: 'mysql' or 'sqlite'
+    DATABASE_TYPE = os.environ.get('DATABASE_TYPE', 'sqlite')
+    
     # MySQL Configuration
     MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
     MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
@@ -15,6 +18,10 @@ class Config:
     
     # MySQL URI format
     MYSQL_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DATABASE}"
+    
+    # SQLite Configuration - stores in project directory
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    SQLITE_DATABASE = os.path.join(BASE_DIR, 'cityhall.db')
     
     # Session config
     SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
@@ -26,6 +33,7 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
+    DATABASE_TYPE = 'sqlite'  # Use SQLite for local development
 
 
 class ProductionConfig(Config):
@@ -33,10 +41,19 @@ class ProductionConfig(Config):
     DEBUG = False
     SECRET_KEY = os.environ.get('SECRET_KEY')
     SESSION_COOKIE_SECURE = True
+    DATABASE_TYPE = os.environ.get('DATABASE_TYPE', 'mysql')
+
+
+class SQLiteConfig(Config):
+    """SQLite configuration for Vercel/deployment"""
+    DEBUG = True
+    DATABASE_TYPE = 'sqlite'
 
 
 config = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
+    'sqlite': SQLiteConfig,
     'default': DevelopmentConfig
 }
+
