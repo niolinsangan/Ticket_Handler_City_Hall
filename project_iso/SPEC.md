@@ -8,15 +8,15 @@
 
 ## Requirements
 
-### 1. Divisions (8 City ENRO Divisions)
-- Division 1: Administration
-- Division 2: Finance
-- Division 3: Operations
-- Division 4: Human Resources
-- Division 5: IT Services
-- Division 6: Legal
-- Division 7: Public Relations
-- Division 8: Infrastructure
+### 1. Divisions (8 ENRO Divisions)
+- Division 1: Forestry Management Services Division
+- Division 2: Wildlife Management Services Division
+- Division 3: Protected Area Management Division
+- Division 4: Mines and Geosciences Management Service Division
+- Division 5: Land Management Services Division
+- Division 6: Environmental Management Services Division
+- Division 7: Environmental Law Enforcement Division
+- Division 8: Administrative Management Services Division
 
 ### 2. Approval Workflow
 1. **Employee**: Creates travel request for their division

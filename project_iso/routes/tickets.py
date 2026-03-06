@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+import sqlite3
 import pymysql
 from datetime import datetime
 from config import Config
@@ -7,14 +8,28 @@ tickets_bp = Blueprint('tickets', __name__)
 
 
 def get_db_connection():
-    """Get MySQL database connection"""
-    return pymysql.connect(
-        host=Config.MYSQL_HOST,
-        user=Config.MYSQL_USER,
-        password=Config.MYSQL_PASSWORD,
-        database=Config.MYSQL_DATABASE,
-        cursorclass=pymysql.cursors.DictCursor
-    )
+    """Get database connection based on configuration"""
+    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
+    
+    if db_type == 'sqlite':
+        conn = sqlite3.connect(Config.SQLITE_DATABASE)
+        conn.row_factory = sqlite3.Row
+        return conn
+    else:
+        return pymysql.connect(
+            host=Config.MYSQL_HOST,
+            user=Config.MYSQL_USER,
+            password=Config.MYSQL_PASSWORD,
+            database=Config.MYSQL_DATABASE,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+
+def dict_from_row(row):
+    """Convert sqlite3.Row to dict"""
+    if row is None:
+        return None
+    return dict(zip(row.keys(), row))
 
 
 def require_login():
@@ -50,6 +65,7 @@ def all_tickets():
         return redirect(url_for('main.dashboard'))
     
     status_filter = request.args.get('status', '')
+    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
     
     try:
         conn = get_db_connection()
@@ -63,12 +79,21 @@ def all_tickets():
         """
         
         if status_filter:
-            query += f" WHERE t.status = '{status_filter}'"
+            if db_type == 'sqlite':
+                query += f" WHERE t.status = '{status_filter}'"
+            else:
+                query += f" WHERE t.status = '{status_filter}'"
         
         query += " ORDER BY t.created_at DESC"
         
         cursor.execute(query)
-        tickets = cursor.fetchall()
+        
+        if db_type == 'sqlite':
+            rows = cursor.fetchall()
+            tickets = [dict_from_row(row) for row in rows]
+        else:
+            tickets = cursor.fetchall()
+        
         conn.close()
         
         # Convert Decimal to float for JSON serialization
@@ -89,17 +114,35 @@ def my_tickets():
     if not require_login():
         return redirect(url_for('auth.login'))
     
+    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
+    
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("""
-            SELECT t.*, d.name as division_name
-            FROM tickets t
-            JOIN divisions d ON t.division_id = d.id
-            WHERE t.user_id = %s
-            ORDER BY t.created_at DESC
-        """, (session['user_id'],))
-        tickets = cursor.fetchall()
+        
+        if db_type == 'sqlite':
+            cursor.execute("""
+                SELECT t.*, d.name as division_name
+                FROM tickets t
+                JOIN divisions d ON t.division_id = d.id
+                WHERE t.user_id = ?
+                ORDER BY t.created_at DESC
+            """, (session['user_id'],))
+        else:
+            cursor.execute("""
+                SELECT t.*, d.name as division_name
+                FROM tickets t
+                JOIN divisions d ON t.division_id = d.id
+                WHERE t.user_id = %s
+                ORDER BY t.created_at DESC
+            """, (session['user_id'],))
+        
+        if db_type == 'sqlite':
+            rows = cursor.fetchall()
+            tickets = [dict_from_row(row) for row in rows]
+        else:
+            tickets = cursor.fetchall()
+        
         conn.close()
         
         # Convert Decimal to float
@@ -123,6 +166,8 @@ def create():
     if session.get('role') != 'employee':
         flash('Only employees can create travel requests', 'warning')
         return redirect(url_for('main.dashboard'))
+    
+    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
     
     if request.method == 'POST':
         destination = request.form.get('destination', '').strip()
@@ -153,10 +198,16 @@ def create():
             conn = get_db_connection()
             cursor = conn.cursor()
             
-            cursor.execute("""
-                INSERT INTO tickets (user_id, division_id, destination, purpose, start_date, end_date, estimated_cost, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
-            """, (session['user_id'], session['division_id'], destination, purpose, start_date, end_date, estimated_cost))
+            if db_type == 'sqlite':
+                cursor.execute("""
+                    INSERT INTO tickets (user_id, division_id, destination, purpose, start_date, end_date, estimated_cost, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+                """, (session['user_id'], session['division_id'], destination, purpose, start_date, end_date, estimated_cost))
+            else:
+                cursor.execute("""
+                    INSERT INTO tickets (user_id, division_id, destination, purpose, start_date, end_date, estimated_cost, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
+                """, (session['user_id'], session['division_id'], destination, purpose, start_date, end_date, estimated_cost))
             
             conn.commit()
             conn.close()
@@ -172,8 +223,13 @@ def create():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT name FROM divisions WHERE id = %s", (session.get('division_id'),))
-        result = cursor.fetchone()
+        
+        if db_type == 'sqlite':
+            cursor.execute("SELECT name FROM divisions WHERE id = ?", (session.get('division_id'),))
+        else:
+            cursor.execute("SELECT name FROM divisions WHERE id = %s", (session.get('division_id'),))
+        
+        result = dict_from_row(cursor.fetchone()) if db_type == 'sqlite' else cursor.fetchone()
         if result:
             division_name = result['name']
         conn.close()
@@ -189,19 +245,31 @@ def view(ticket_id):
     if not require_login():
         return redirect(url_for('auth.login'))
     
+    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
+    
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
         # Get ticket
-        cursor.execute("""
-            SELECT t.*, u.full_name as user_name, d.name as division_name
-            FROM tickets t
-            JOIN users u ON t.user_id = u.id
-            JOIN divisions d ON t.division_id = d.id
-            WHERE t.id = %s
-        """, (ticket_id,))
-        ticket = cursor.fetchone()
+        if db_type == 'sqlite':
+            cursor.execute("""
+                SELECT t.*, u.full_name as user_name, d.name as division_name
+                FROM tickets t
+                JOIN users u ON t.user_id = u.id
+                JOIN divisions d ON t.division_id = d.id
+                WHERE t.id = ?
+            """, (ticket_id,))
+        else:
+            cursor.execute("""
+                SELECT t.*, u.full_name as user_name, d.name as division_name
+                FROM tickets t
+                JOIN users u ON t.user_id = u.id
+                JOIN divisions d ON t.division_id = d.id
+                WHERE t.id = %s
+            """, (ticket_id,))
+        
+        ticket = dict_from_row(cursor.fetchone()) if db_type == 'sqlite' else cursor.fetchone()
         
         if not ticket:
             flash('Ticket not found', 'danger')
@@ -213,14 +281,28 @@ def view(ticket_id):
             return redirect(url_for('main.dashboard'))
         
         # Get approval history
-        cursor.execute("""
-            SELECT a.*, u.full_name as approver_name
-            FROM approvals a
-            JOIN users u ON a.approver_id = u.id
-            WHERE a.ticket_id = %s
-            ORDER BY a.created_at ASC
-        """, (ticket_id,))
-        approvals = cursor.fetchall()
+        if db_type == 'sqlite':
+            cursor.execute("""
+                SELECT a.*, u.full_name as approver_name
+                FROM approvals a
+                JOIN users u ON a.approver_id = u.id
+                WHERE a.ticket_id = ?
+                ORDER BY a.created_at ASC
+            """, (ticket_id,))
+        else:
+            cursor.execute("""
+                SELECT a.*, u.full_name as approver_name
+                FROM approvals a
+                JOIN users u ON a.approver_id = u.id
+                WHERE a.ticket_id = %s
+                ORDER BY a.created_at ASC
+            """, (ticket_id,))
+        
+        if db_type == 'sqlite':
+            rows = cursor.fetchall()
+            approvals = [dict_from_row(row) for row in rows]
+        else:
+            approvals = cursor.fetchall()
         
         conn.close()
         
@@ -246,14 +328,19 @@ def approve(ticket_id):
         return redirect(url_for('main.dashboard'))
     
     comments = request.form.get('comments', '').strip()
+    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
     
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
         # Get ticket
-        cursor.execute("SELECT * FROM tickets WHERE id = %s", (ticket_id,))
-        ticket = cursor.fetchone()
+        if db_type == 'sqlite':
+            cursor.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,))
+        else:
+            cursor.execute("SELECT * FROM tickets WHERE id = %s", (ticket_id,))
+        
+        ticket = dict_from_row(cursor.fetchone()) if db_type == 'sqlite' else cursor.fetchone()
         
         if not ticket:
             flash('Ticket not found', 'danger')
@@ -273,13 +360,22 @@ def approve(ticket_id):
             return redirect(url_for('tickets.view', ticket_id=ticket_id))
         
         # Update ticket status
-        cursor.execute("UPDATE tickets SET status = %s WHERE id = %s", (new_status, ticket_id))
+        if db_type == 'sqlite':
+            cursor.execute("UPDATE tickets SET status = ? WHERE id = ?", (new_status, ticket_id))
+        else:
+            cursor.execute("UPDATE tickets SET status = %s WHERE id = %s", (new_status, ticket_id))
         
         # Record approval
-        cursor.execute("""
-            INSERT INTO approvals (ticket_id, approver_id, level, action, comments)
-            VALUES (%s, %s, %s, 'approved', %s)
-        """, (ticket_id, session['user_id'], level, comments))
+        if db_type == 'sqlite':
+            cursor.execute("""
+                INSERT INTO approvals (ticket_id, approver_id, level, action, comments)
+                VALUES (?, ?, ?, 'approved', ?)
+            """, (ticket_id, session['user_id'], level, comments))
+        else:
+            cursor.execute("""
+                INSERT INTO approvals (ticket_id, approver_id, level, action, comments)
+                VALUES (%s, %s, %s, 'approved', %s)
+            """, (ticket_id, session['user_id'], level, comments))
         
         conn.commit()
         conn.close()
@@ -303,6 +399,7 @@ def reject(ticket_id):
         return redirect(url_for('main.dashboard'))
     
     comments = request.form.get('comments', '').strip()
+    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
     
     if not comments:
         flash('Rejection reason is required', 'danger')
@@ -313,8 +410,12 @@ def reject(ticket_id):
         cursor = conn.cursor()
         
         # Get ticket
-        cursor.execute("SELECT * FROM tickets WHERE id = %s", (ticket_id,))
-        ticket = cursor.fetchone()
+        if db_type == 'sqlite':
+            cursor.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,))
+        else:
+            cursor.execute("SELECT * FROM tickets WHERE id = %s", (ticket_id,))
+        
+        ticket = dict_from_row(cursor.fetchone()) if db_type == 'sqlite' else cursor.fetchone()
         
         if not ticket:
             flash('Ticket not found', 'danger')
@@ -331,13 +432,22 @@ def reject(ticket_id):
             level = 'director'
         
         # Update ticket status
-        cursor.execute("UPDATE tickets SET status = 'rejected' WHERE id = %s", (ticket_id,))
+        if db_type == 'sqlite':
+            cursor.execute("UPDATE tickets SET status = 'rejected' WHERE id = ?", (ticket_id,))
+        else:
+            cursor.execute("UPDATE tickets SET status = 'rejected' WHERE id = %s", (ticket_id,))
         
         # Record rejection
-        cursor.execute("""
-            INSERT INTO approvals (ticket_id, approver_id, level, action, comments)
-            VALUES (%s, %s, %s, 'rejected', %s)
-        """, (ticket_id, session['user_id'], level, comments))
+        if db_type == 'sqlite':
+            cursor.execute("""
+                INSERT INTO approvals (ticket_id, approver_id, level, action, comments)
+                VALUES (?, ?, ?, 'rejected', ?)
+            """, (ticket_id, session['user_id'], level, comments))
+        else:
+            cursor.execute("""
+                INSERT INTO approvals (ticket_id, approver_id, level, action, comments)
+                VALUES (%s, %s, %s, 'rejected', %s)
+            """, (ticket_id, session['user_id'], level, comments))
         
         conn.commit()
         conn.close()
@@ -348,3 +458,4 @@ def reject(ticket_id):
         flash(f'Error rejecting ticket: {str(e)}', 'danger')
     
     return redirect(url_for('tickets.view', ticket_id=ticket_id))
+
