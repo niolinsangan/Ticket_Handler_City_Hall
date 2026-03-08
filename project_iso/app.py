@@ -137,9 +137,40 @@ def init_sqlite_db(app):
             ('admin', hashed, 'admin', 'System Administrator')
         )
     
+    # Insert default director users if not exists
+    cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'director'")
+    if cursor.fetchone()[0] == 0:
+        bcrypt_instance = Bcrypt()
+        # Director 1
+        hashed = bcrypt_instance.generate_password_hash('director123').decode('utf-8')
+        cursor.execute(
+            "INSERT INTO users (username, password, role, division_id, full_name) VALUES (?, ?, ?, ?, ?)",
+            ('director1', hashed, 'director', 1, 'John Director')
+        )
+        # Director 2
+        hashed = bcrypt_instance.generate_password_hash('director123').decode('utf-8')
+        cursor.execute(
+            "INSERT INTO users (username, password, role, division_id, full_name) VALUES (?, ?, ?, ?, ?)",
+            ('director2', hashed, 'director', 2, 'Jane Director')
+        )
+    
+    # Insert default final authorizer user if not exists
+    cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'final_authorizer'")
+    if cursor.fetchone()[0] == 0:
+        bcrypt_instance = Bcrypt()
+        hashed = bcrypt_instance.generate_password_hash('authorizer123').decode('utf-8')
+        cursor.execute(
+            "INSERT INTO users (username, password, role, full_name) VALUES (?, ?, ?, ?)",
+            ('authorizer', hashed, 'final_authorizer', 'Chief Authorizer')
+        )
+    
     conn.commit()
     conn.close()
     print("SQLite database initialized successfully!")
+    print("  - Admin: username='admin', password='admin123', role='admin'")
+    print("  - Director 1: username='director1', password='director123', role='director'")
+    print("  - Director 2: username='director2', password='director123', role='director'")
+    print("  - Final Authorizer: username='authorizer', password='authorizer123', role='final_authorizer'")
 
 
 def init_mysql_db(app):
@@ -238,7 +269,7 @@ def init_mysql_db(app):
             for div in divisions:
                 cursor.execute("INSERT INTO divisions (name) VALUES (%s)", (div,))
         
-        # Insert default admin user if not exists
+# Insert default admin user if not exists
         cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
         if cursor.fetchone()[0] == 0:
             from flask_bcrypt import Bcrypt
@@ -249,9 +280,42 @@ def init_mysql_db(app):
                 ('admin', hashed, 'admin', 'System Administrator')
             )
         
+        # Insert default director users if not exists
+        cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'director'")
+        if cursor.fetchone()[0] == 0:
+            from flask_bcrypt import Bcrypt
+            bcrypt_instance = Bcrypt()
+            # Director 1
+            hashed = bcrypt_instance.generate_password_hash('director123').decode('utf-8')
+            cursor.execute(
+                "INSERT INTO users (username, password, role, division_id, full_name) VALUES (%s, %s, %s, %s, %s)",
+                ('director1', hashed, 'director', 1, 'John Director')
+            )
+            # Director 2
+            hashed = bcrypt_instance.generate_password_hash('director123').decode('utf-8')
+            cursor.execute(
+                "INSERT INTO users (username, password, role, division_id, full_name) VALUES (%s, %s, %s, %s, %s)",
+                ('director2', hashed, 'director', 2, 'Jane Director')
+            )
+        
+        # Insert default final authorizer user if not exists
+        cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'final_authorizer'")
+        if cursor.fetchone()[0] == 0:
+            from flask_bcrypt import Bcrypt
+            bcrypt_instance = Bcrypt()
+            hashed = bcrypt_instance.generate_password_hash('authorizer123').decode('utf-8')
+            cursor.execute(
+                "INSERT INTO users (username, password, role, full_name) VALUES (%s, %s, %s, %s)",
+                ('authorizer', hashed, 'final_authorizer', 'Chief Authorizer')
+            )
+        
         conn.commit()
         conn.close()
         print("MySQL database initialized successfully!")
+        print("  - Admin: username='admin', password='admin123', role='admin'")
+        print("  - Director 1: username='director1', password='director123', role='director'")
+        print("  - Director 2: username='director2', password='director123', role='director'")
+        print("  - Final Authorizer: username='authorizer', password='authorizer123', role='final_authorizer'")
         
     except Exception as e:
         print(f"MySQL database initialization error: {e}")
