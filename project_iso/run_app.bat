@@ -60,11 +60,7 @@ echo ========================================
 echo.
 
 :: Open browser to Flask app
-<<<<<<< HEAD
 start http://localhost:5000
-=======
-start "" "http://localhost:5000"
->>>>>>> 4e94d1eaa02ee8c705b168e1cc0f14d196cffb17
 
 :: Start Flask app in background using pythonw (no terminal window)
 start "" "c:\Users\Niiyyoooww\Desktop\CITY_HALL_ASSIGNMENT\cvenv\Scripts\pythonw.exe" app.py
@@ -73,8 +69,5 @@ echo App started! Opening browser at http://localhost:5000
 echo.
 echo To stop the server, close this window and end pythonw.exe in Task Manager.
 echo.
-<<<<<<< HEAD
 exit
-=======
-exit
->>>>>>> 4e94d1eaa02ee8c705b168e1cc0f14d196cffb17
+
