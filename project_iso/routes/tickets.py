@@ -190,6 +190,7 @@ def create():
         associates = request.form.get('associates', '').strip()
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
+        vehicle_needed = 'yes' if request.form.get('vehicle_needed') else 'no'
         
         # Validation
         errors = []
@@ -214,13 +215,13 @@ def create():
             if db_type == 'sqlite':
                 cursor.execute("""
                     INSERT INTO tickets (user_id, division_id, destination, purpose, associates, start_date, end_date, vehicle_needed, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 'no', 'pending')
-                """, (session['user_id'], session['division_id'], destination, purpose, associates, start_date, end_date))
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+                """, (session['user_id'], session['division_id'], destination, purpose, associates, start_date, end_date, vehicle_needed))
             else:
                 cursor.execute("""
                     INSERT INTO tickets (user_id, division_id, destination, purpose, associates, start_date, end_date, vehicle_needed, status)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, 'no', 'pending')
-                """, (session['user_id'], session['division_id'], destination, purpose, associates, start_date, end_date))
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                """, (session['user_id'], session['division_id'], destination, purpose, associates, start_date, end_date, vehicle_needed))
             
             conn.commit()
             conn.close()
@@ -293,6 +294,7 @@ def edit(ticket_id):
             associates = request.form.get('associates', '').strip()
             start_date = request.form.get('start_date')
             end_date = request.form.get('end_date')
+            vehicle_needed = 'yes' if request.form.get('vehicle_needed') else 'no'
             
             # Validation
             errors = []
@@ -314,15 +316,15 @@ def edit(ticket_id):
             if db_type == 'sqlite':
                 cursor.execute("""
                     UPDATE tickets 
-                    SET destination = ?, purpose = ?, associates = ?, start_date = ?, end_date = ?
+                    SET destination = ?, purpose = ?, associates = ?, start_date = ?, end_date = ?, vehicle_needed = ?
                     WHERE id = ?
-                """, (destination, purpose, associates, start_date, end_date, ticket_id))
+                """, (destination, purpose, associates, start_date, end_date, vehicle_needed, ticket_id))
             else:
                 cursor.execute("""
                     UPDATE tickets 
-                    SET destination = %s, purpose = %s, associates = %s, start_date = %s, end_date = %s
+                    SET destination = %s, purpose = %s, associates = %s, start_date = %s, end_date = %s, vehicle_needed = %s
                     WHERE id = %s
-                """, (destination, purpose, associates, start_date, end_date, ticket_id))
+                """, (destination, purpose, associates, start_date, end_date, vehicle_needed, ticket_id))
             
             conn.commit()
             conn.close()

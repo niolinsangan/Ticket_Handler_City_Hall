@@ -45,7 +45,6 @@
                         <th>Associates</th>
                         <th>Start Date</th>
                         <th>End Date</th>
-                        <th>Est. Cost</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -60,7 +59,6 @@
                         <td>{{ ticket.associates if ticket.associates else '-' }}</td>
                         <td>{{ ticket.start_date.strftime('%Y-%m-%d') if ticket.start_date else '-' }}</td>
                         <td>{{ ticket.end_date.strftime('%Y-%m-%d') if ticket.end_date else '-' }}</td>
-                        <td>₱{{ "%.2f"|format(ticket.estimated_cost) }}</td>
                         <td>
                             <span class="status-badge status-{{ ticket.status }}">
                                 {{ ticket.status|replace('_', ' ')|title }}

@@ -10,18 +10,24 @@
 - [x] 6. Add vehicle_needed and vehicle_assigned fields to routes and templates
 - [x] 7. Add edit route for tickets
 - [x] 8. Create migration script (migrate_add_associates.py)
+- [x] 9. Run migration to add columns to SQLite database
+- [x] 10. Fix vehicle_needed field handling in create and edit routes
 
-## Next Step - Run Migration
+## Completed
 
-**IMPORTANT**: Run the migration script to add the columns to SQLite database:
+All features are now fully implemented:
+- **Associates field**: Can be added when creating a travel request
+- **Vehicle needed**: Checkbox to indicate if a vehicle is needed
+- **Vehicle assigned**: Admin can assign a vehicle when approving tickets
+- **Edit functionality**: Employees can edit pending tickets
 
-```bash
-python migrate_add_associates.py
-```
+The application is running on:
+- http://127.0.0.1:5000
+- http://192.168.254.115:5000
 
-This will add the following columns to the tickets table:
-- `associates VARCHAR(200)`
-- `vehicle_needed VARCHAR(10) DEFAULT 'no'`
-- `vehicle_assigned VARCHAR(100)`
+## Test Accounts
 
-For MySQL, the columns already exist in the schema defined in init_db_script.py.
+- **Admin**: username='admin', password='admin123'
+- **Director 1**: username='director1', password='director123'
+- **Director 2**: username='director2', password='director123'
+- **Final Authorizer**: username='authorizer', password='authorizer123'
