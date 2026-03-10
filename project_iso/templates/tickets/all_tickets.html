@@ -42,6 +42,7 @@
                         <th>Employee</th>
                         <th>Division</th>
                         <th>Destination</th>
+                        <th>Associates</th>
                         <th>Start Date</th>
                         <th>End Date</th>
                         <th>Est. Cost</th>
@@ -56,6 +57,7 @@
                         <td>{{ ticket.user_name }}</td>
                         <td>{{ ticket.division_name }}</td>
                         <td>{{ ticket.destination }}</td>
+                        <td>{{ ticket.associates if ticket.associates else '-' }}</td>
                         <td>{{ ticket.start_date.strftime('%Y-%m-%d') if ticket.start_date else '-' }}</td>
                         <td>{{ ticket.end_date.strftime('%Y-%m-%d') if ticket.end_date else '-' }}</td>
                         <td>₱{{ "%.2f"|format(ticket.estimated_cost) }}</td>

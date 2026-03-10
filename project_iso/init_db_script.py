@@ -72,6 +72,7 @@ def init_db():
                 division_id INT NOT NULL,
                 destination VARCHAR(200) NOT NULL,
                 purpose TEXT NOT NULL,
+                associates TEXT,
                 start_date DATE NOT NULL,
                 end_date DATE NOT NULL,
                 estimated_cost DECIMAL(10, 2) NOT NULL,

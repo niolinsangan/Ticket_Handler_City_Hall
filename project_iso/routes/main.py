@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, session
 import sqlite3
 import pymysql
+from datetime import datetime
 from config import Config
 
 main_bp = Blueprint('main', __name__)
@@ -163,6 +164,11 @@ def dashboard():
         for ticket in recent_tickets:
             if ticket.get('estimated_cost'):
                 ticket['estimated_cost'] = float(ticket['estimated_cost'])
+            # Convert date strings to datetime objects for strftime in templates
+            if ticket.get('start_date') and isinstance(ticket.get('start_date'), str):
+                ticket['start_date'] = datetime.strptime(ticket['start_date'], '%Y-%m-%d').date()
+            if ticket.get('end_date') and isinstance(ticket.get('end_date'), str):
+                ticket['end_date'] = datetime.strptime(ticket['end_date'], '%Y-%m-%d').date()
         
     except Exception as e:
         stats = {'total': 0, 'pending': 0, 'director_approved': 0, 'approved': 0, 'rejected': 0}
