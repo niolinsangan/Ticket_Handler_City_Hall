@@ -9,10 +9,19 @@
 - [x] 5. Update templates/tickets/my_tickets.html - Add Associates column to table
 - [x] 6. Add vehicle_needed and vehicle_assigned fields to routes and templates
 - [x] 7. Add edit route for tickets
+- [x] 8. Create migration script (migrate_add_associates.py)
 
-## Notes
-- Database already has `associates VARCHAR(200) NOT NULL` column in tickets table (MySQL)
-- For SQLite, run migrations to add the columns:
-  - `associates VARCHAR(200)`
-  - `vehicle_needed VARCHAR(10) DEFAULT 'no'`
-  - `vehicle_assigned VARCHAR(100)`
+## Next Step - Run Migration
+
+**IMPORTANT**: Run the migration script to add the columns to SQLite database:
+
+```bash
+python migrate_add_associates.py
+```
+
+This will add the following columns to the tickets table:
+- `associates VARCHAR(200)`
+- `vehicle_needed VARCHAR(10) DEFAULT 'no'`
+- `vehicle_assigned VARCHAR(100)`
+
+For MySQL, the columns already exist in the schema defined in init_db_script.py.
