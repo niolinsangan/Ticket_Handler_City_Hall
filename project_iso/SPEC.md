@@ -63,9 +63,11 @@
 | division_id | INT (FK) | Division |
 | destination | VARCHAR(200) | Travel destination |
 | purpose | TEXT | Purpose of travel |
+| associates | TEXT | Other travelers |
 | start_date | DATE | Travel start date |
 | end_date | DATE | Travel end date |
-| estimated_cost | DECIMAL | Estimated cost |
+| vehicle_needed | VARCHAR(10) | Vehicle needed (yes/no) |
+| vehicle_assigned | VARCHAR(100) | Vehicle assigned (admin only) |
 | status | ENUM | pending, director_approved, approved, rejected |
 | created_at | DATETIME | Creation timestamp |
 | updated_at | DATETIME | Last update |

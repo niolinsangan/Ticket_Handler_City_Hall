@@ -79,14 +79,24 @@ def all_tickets():
         """
         
         if status_filter:
-            if db_type == 'sqlite':
-                query += f" WHERE t.status = '{status_filter}'"
+            # Validate status_filter to prevent SQL injection
+            allowed_statuses = ['pending', 'director_approved', 'approved', 'rejected']
+            if status_filter in allowed_statuses:
+                if db_type == 'sqlite':
+                    query += " WHERE t.status = ?"
+                    params = (status_filter,)
+                else:
+                    query += " WHERE t.status = %s"
+                    params = (status_filter,)
             else:
-                query += f" WHERE t.status = '{status_filter}'"
+                params = ()
         
         query += " ORDER BY t.created_at DESC"
         
-        cursor.execute(query)
+        if status_filter and status_filter in allowed_statuses:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
         
         if db_type == 'sqlite':
             rows = cursor.fetchall()
@@ -96,11 +106,14 @@ def all_tickets():
         
         conn.close()
         
-        # Convert Decimal to float for JSON serialization
+        # Convert date strings to datetime objects for strftime in templates
         for ticket in tickets:
-            if ticket.get('estimated_cost'):
-                ticket['estimated_cost'] = float(ticket['estimated_cost'])
+            if ticket.get('start_date') and isinstance(ticket.get('start_date'), str):
+                ticket['start_date'] = datetime.strptime(ticket['start_date'], '%Y-%m-%d').date()
+            if ticket.get('end_date') and isinstance(ticket.get('end_date'), str):
+                ticket['end_date'] = datetime.strptime(ticket['end_date'], '%Y-%m-%d').date()
                 
+            
     except Exception as e:
         flash(f'Error loading tickets: {str(e)}', 'danger')
         tickets = []
@@ -145,10 +158,12 @@ def my_tickets():
         
         conn.close()
         
-        # Convert Decimal to float
+        # Convert date strings to datetime objects for strftime in templates
         for ticket in tickets:
-            if ticket.get('estimated_cost'):
-                ticket['estimated_cost'] = float(ticket['estimated_cost'])
+            if ticket.get('start_date') and isinstance(ticket.get('start_date'), str):
+                ticket['start_date'] = datetime.strptime(ticket['start_date'], '%Y-%m-%d').date()
+            if ticket.get('end_date') and isinstance(ticket.get('end_date'), str):
+                ticket['end_date'] = datetime.strptime(ticket['end_date'], '%Y-%m-%d').date()
                 
     except Exception as e:
         flash(f'Error loading tickets: {str(e)}', 'danger')
@@ -172,9 +187,10 @@ def create():
     if request.method == 'POST':
         destination = request.form.get('destination', '').strip()
         purpose = request.form.get('purpose', '').strip()
+        associates = request.form.get('associates', '').strip()
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
-        estimated_cost = request.form.get('estimated_cost')
+        vehicle_needed = 'yes' if request.form.get('vehicle_needed') else 'no'
         
         # Validation
         errors = []
@@ -186,8 +202,6 @@ def create():
             errors.append('Start and end dates are required')
         if start_date and end_date and start_date > end_date:
             errors.append('End date must be after start date')
-        if not estimated_cost or float(estimated_cost) <= 0:
-            errors.append('Valid estimated cost is required')
         
         if errors:
             for error in errors:
@@ -200,14 +214,14 @@ def create():
             
             if db_type == 'sqlite':
                 cursor.execute("""
-                    INSERT INTO tickets (user_id, division_id, destination, purpose, start_date, end_date, estimated_cost, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
-                """, (session['user_id'], session['division_id'], destination, purpose, start_date, end_date, estimated_cost))
+                    INSERT INTO tickets (user_id, division_id, destination, purpose, associates, start_date, end_date, vehicle_needed, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+                """, (session['user_id'], session['division_id'], destination, purpose, associates, start_date, end_date, vehicle_needed))
             else:
                 cursor.execute("""
-                    INSERT INTO tickets (user_id, division_id, destination, purpose, start_date, end_date, estimated_cost, status)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
-                """, (session['user_id'], session['division_id'], destination, purpose, start_date, end_date, estimated_cost))
+                    INSERT INTO tickets (user_id, division_id, destination, purpose, associates, start_date, end_date, vehicle_needed, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                """, (session['user_id'], session['division_id'], destination, purpose, associates, start_date, end_date, vehicle_needed))
             
             conn.commit()
             conn.close()
@@ -237,6 +251,94 @@ def create():
         pass
     
     return render_template('tickets/create.html', division_name=division_name)
+
+
+@tickets_bp.route('/<int:ticket_id>/edit', methods=['GET', 'POST'])
+def edit(ticket_id):
+    """Edit existing travel request (only for pending tickets)"""
+    if not require_login():
+        return redirect(url_for('auth.login'))
+    
+    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get ticket
+        if db_type == 'sqlite':
+            cursor.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,))
+        else:
+            cursor.execute("SELECT * FROM tickets WHERE id = %s", (ticket_id,))
+        
+        ticket = dict_from_row(cursor.fetchone()) if db_type == 'sqlite' else cursor.fetchone()
+        
+        if not ticket:
+            flash('Ticket not found', 'danger')
+            return redirect(url_for('main.dashboard'))
+        
+        # Check if user owns the ticket
+        if ticket['user_id'] != session['user_id']:
+            flash('Access denied', 'danger')
+            return redirect(url_for('main.dashboard'))
+        
+        # Only allow editing pending tickets
+        if ticket['status'] != 'pending':
+            flash('Only pending tickets can be edited', 'warning')
+            return redirect(url_for('tickets.view', ticket_id=ticket_id))
+        
+        # Handle form submission
+        if request.method == 'POST':
+            destination = request.form.get('destination', '').strip()
+            purpose = request.form.get('purpose', '').strip()
+            associates = request.form.get('associates', '').strip()
+            start_date = request.form.get('start_date')
+            end_date = request.form.get('end_date')
+            vehicle_needed = 'yes' if request.form.get('vehicle_needed') else 'no'
+            
+            # Validation
+            errors = []
+            if not destination:
+                errors.append('Destination is required')
+            if not purpose:
+                errors.append('Purpose is required')
+            if not start_date or not end_date:
+                errors.append('Start and end dates are required')
+            if start_date and end_date and start_date > end_date:
+                errors.append('End date must be after start date')
+            
+            if errors:
+                for error in errors:
+                    flash(error, 'danger')
+                return redirect(url_for('tickets.edit', ticket_id=ticket_id))
+            
+            # Update ticket
+            if db_type == 'sqlite':
+                cursor.execute("""
+                    UPDATE tickets 
+                    SET destination = ?, purpose = ?, associates = ?, start_date = ?, end_date = ?, vehicle_needed = ?
+                    WHERE id = ?
+                """, (destination, purpose, associates, start_date, end_date, vehicle_needed, ticket_id))
+            else:
+                cursor.execute("""
+                    UPDATE tickets 
+                    SET destination = %s, purpose = %s, associates = %s, start_date = %s, end_date = %s, vehicle_needed = %s
+                    WHERE id = %s
+                """, (destination, purpose, associates, start_date, end_date, vehicle_needed, ticket_id))
+            
+            conn.commit()
+            conn.close()
+            
+            flash('Travel request updated successfully!', 'success')
+            return redirect(url_for('tickets.view', ticket_id=ticket_id))
+        
+        conn.close()
+        
+    except Exception as e:
+        flash(f'Error loading ticket: {str(e)}', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    return render_template('tickets/edit.html', ticket=ticket)
 
 
 @tickets_bp.route('/<int:ticket_id>')
@@ -306,9 +408,16 @@ def view(ticket_id):
         
         conn.close()
         
-        # Convert Decimal
-        if ticket.get('estimated_cost'):
-            ticket['estimated_cost'] = float(ticket['estimated_cost'])
+        # Convert date strings to datetime objects for strftime in templates
+        if ticket.get('start_date') and isinstance(ticket.get('start_date'), str):
+            ticket['start_date'] = datetime.strptime(ticket['start_date'], '%Y-%m-%d').date()
+        if ticket.get('end_date') and isinstance(ticket.get('end_date'), str):
+            ticket['end_date'] = datetime.strptime(ticket['end_date'], '%Y-%m-%d').date()
+        
+        # Convert approval timestamps as well
+        for approval in approvals:
+            if approval.get('created_at') and isinstance(approval.get('created_at'), str):
+                approval['created_at'] = datetime.strptime(approval['created_at'], '%Y-%m-%d %H:%M:%S')
             
     except Exception as e:
         flash(f'Error loading ticket: {str(e)}', 'danger')
@@ -328,6 +437,7 @@ def approve(ticket_id):
         return redirect(url_for('main.dashboard'))
     
     comments = request.form.get('comments', '').strip()
+    vehicle_assigned = request.form.get('vehicle_assigned', '').strip()
     db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
     
     try:
@@ -359,11 +469,17 @@ def approve(ticket_id):
             flash('Ticket cannot be approved at this stage', 'warning')
             return redirect(url_for('tickets.view', ticket_id=ticket_id))
         
-        # Update ticket status
-        if db_type == 'sqlite':
-            cursor.execute("UPDATE tickets SET status = ? WHERE id = ?", (new_status, ticket_id))
+        # Update ticket status and vehicle assignment (for admin)
+        if session.get('role') == 'admin' and vehicle_assigned:
+            if db_type == 'sqlite':
+                cursor.execute("UPDATE tickets SET status = ?, vehicle_assigned = ? WHERE id = ?", (new_status, vehicle_assigned, ticket_id))
+            else:
+                cursor.execute("UPDATE tickets SET status = %s, vehicle_assigned = %s WHERE id = %s", (new_status, vehicle_assigned, ticket_id))
         else:
-            cursor.execute("UPDATE tickets SET status = %s WHERE id = %s", (new_status, ticket_id))
+            if db_type == 'sqlite':
+                cursor.execute("UPDATE tickets SET status = ? WHERE id = ?", (new_status, ticket_id))
+            else:
+                cursor.execute("UPDATE tickets SET status = %s WHERE id = %s", (new_status, ticket_id))
         
         # Record approval
         if db_type == 'sqlite':
@@ -458,4 +574,3 @@ def reject(ticket_id):
         flash(f'Error rejecting ticket: {str(e)}', 'danger')
     
     return redirect(url_for('tickets.view', ticket_id=ticket_id))
-

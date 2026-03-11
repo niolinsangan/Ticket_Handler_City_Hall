@@ -8,7 +8,6 @@
         <h2><i class="bi bi-plus-circle"></i> Create New Travel Request</h2>
         <p class="text-muted">Submit a new travel request for approval</p>
     </div>
-</div>
 
 <div class="row">
     <div class="col-md-8">
@@ -37,6 +36,13 @@
                                   placeholder="Describe the purpose of your travel" required></textarea>
                     </div>
                     
+                    <div class="mb-3">
+                        <label for="associates" class="form-label">Associates (Optional)</label>
+                        <textarea class="form-control" id="associates" name="associates" rows="3" 
+                               placeholder="Enter names of other people traveling with you"></textarea>
+                        <small class="text-muted">List any other individuals who will be traveling with you</small>
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="start_date" class="form-label">Start Date</label>
@@ -49,10 +55,14 @@
                         </div>
                     </div>
                     
-                    <div class="mb-4">
-                        <label for="estimated_cost" class="form-label">Estimated Cost (₱)</label>
-                        <input type="number" class="form-control" id="estimated_cost" name="estimated_cost" 
-                               placeholder="0.00" step="0.01" min="0" required>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="vehicle_needed" name="vehicle_needed" value="yes">
+                            <label class="form-check-label" for="vehicle_needed">
+                                <i class="bi bi-car"></i> Vehicle Needed
+                            </label>
+                        </div>
+                        <small class="text-muted">Check this if you need a vehicle for this travel</small>
                     </div>
                     
                     <div class="d-grid gap-2">
