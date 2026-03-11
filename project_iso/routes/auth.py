@@ -42,7 +42,7 @@ def login():
         
         if not username or not password:
             flash('Username and password are required', 'danger')
-            return render_template('auth/login.html')
+            return render_template('auth/login.html', layout='minimal')
         
         try:
             conn = get_db_connection()
@@ -82,7 +82,7 @@ def login():
         except Exception as e:
             flash(f'Login error: {str(e)}', 'danger')
     
-    return render_template('auth/login.html')
+    return render_template('auth/login.html', layout='minimal')
 
 
 @auth_bp.route('/logout')
@@ -180,5 +180,5 @@ def register():
     except:
         divisions = []
     
-    return render_template('auth/register.html', divisions=divisions)
+    return render_template('auth/register.html', divisions=divisions, layout='minimal')
 

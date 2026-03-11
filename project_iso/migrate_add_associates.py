@@ -1,12 +1,12 @@
 """
-Migration script to add associates and vehicle_needed columns to SQLite database
+Migration script to add associates, vehicle_needed, and vehicle_assigned columns to SQLite database
 """
 import sqlite3
 import os
 from config import Config
 
 def migrate():
-    """Add associates and vehicle_needed columns to tickets table"""
+    """Add associates, vehicle_needed, and vehicle_assigned columns to tickets table"""
     db_path = Config.SQLITE_DATABASE
     
     if not os.path.exists(db_path):
@@ -25,7 +25,7 @@ def migrate():
     # Add associates column if not exists
     if 'associates' not in columns:
         print("Adding 'associates' column...")
-        cursor.execute("ALTER TABLE tickets ADD COLUMN associates VARCHAR(200)")
+        cursor.execute("ALTER TABLE tickets ADD COLUMN associates TEXT")
         print("Added 'associates' column")
     else:
         print("'associates' column already exists")

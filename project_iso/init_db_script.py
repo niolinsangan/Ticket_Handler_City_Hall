@@ -75,7 +75,8 @@ def init_db():
                 associates TEXT,
                 start_date DATE NOT NULL,
                 end_date DATE NOT NULL,
-                estimated_cost DECIMAL(10, 2) NOT NULL,
+                vehicle_needed VARCHAR(10) DEFAULT 'no',
+                vehicle_assigned VARCHAR(100),
                 status ENUM('pending', 'director_approved', 'approved', 'rejected') DEFAULT 'pending',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -107,12 +108,12 @@ def init_db():
             divisions = [
                'Forestry Management Services Division', 
                'Wildlife Management Services Division', 
-               'Human Resources Management Service Division', 
+               'Protected Area Management Division', 
                'Mines and Geosciences Management Service Division', 
                'Land Management Services Division',
                'Environmental Management Services Division', 
                'Environmental Law Enforcement Division',
-               'Administrative Management Services Division'             
+               'Administrative Management Services Division'              
             ]
             
             for div in divisions:

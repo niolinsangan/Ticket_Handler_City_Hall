@@ -12,14 +12,18 @@
 - [x] 8. Create migration script (migrate_add_associates.py)
 - [x] 9. Run migration to add columns to SQLite database
 - [x] 10. Fix vehicle_needed field handling in create and edit routes
+- [x] 11. Remove estimated_cost field from the entire system
 
-## Completed
+## Completed Features
 
 All features are now fully implemented:
 - **Associates field**: Can be added when creating a travel request
 - **Vehicle needed**: Checkbox to indicate if a vehicle is needed
 - **Vehicle assigned**: Admin can assign a vehicle when approving tickets
 - **Edit functionality**: Employees can edit pending tickets
+
+### Removed Features
+- **estimated_cost**: Completely removed from the system (database schema, routes, templates, and documentation)
 
 The application is running on:
 - http://127.0.0.1:5000
@@ -31,3 +35,7 @@ The application is running on:
 - **Director 1**: username='director1', password='director123'
 - **Director 2**: username='director2', password='director123'
 - **Final Authorizer**: username='authorizer', password='authorizer123'
+
+## Pending Tasks
+
+- [ ] None - All tasks completed!

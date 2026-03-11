@@ -162,8 +162,6 @@ def dashboard():
                     stats[key] = 0
         
         for ticket in recent_tickets:
-            if ticket.get('estimated_cost'):
-                ticket['estimated_cost'] = float(ticket['estimated_cost'])
             # Convert date strings to datetime objects for strftime in templates
             if ticket.get('start_date') and isinstance(ticket.get('start_date'), str):
                 ticket['start_date'] = datetime.strptime(ticket['start_date'], '%Y-%m-%d').date()
