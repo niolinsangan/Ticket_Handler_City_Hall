@@ -1,15 +1,14 @@
-# Mobile Responsiveness TODO
+# CITY HALL TICKET HANDLER TODO
 
-## Completed (Step 1-2/5)
-- [x] Backup base.html
-- [x] Create TODO.md for tracking
-- [x] Add mobile-optimized CSS to base.html (@media queries for sm/xs screens)
+## Fix Dashboard Recent Requests Display (end_date/status) - COMPLETED ✅
+- [x] Update dashboard.html recent tickets table for better visibility (icons added to headers/status badges)
+- [x] Enhance base.html .status-badge CSS for dashboard cards (improved padding, font-weight, mobile sizing)
+- [x] Test dashboard rendering
+- [x] Commit and push changes
 
-## Remaining Steps (Step 3/5)
-- [ ] Search other templates for non-responsive elements (done: all_tickets.html, dashboard.html, create.html use table-responsive, col-md-* - good)
-- [ ] Update affected templates if needed (no major changes; CSS handles tables)
-- [ ] Test app in mobile browser devtools
-- [ ] Attempt completion
+## Previous Tasks
+- [x] Mobile responsiveness (base.html CSS)
+- [x] Git main branch setup
 
-Updated after each step.
+Updated: Dashboard end_date/status fix in progress
 

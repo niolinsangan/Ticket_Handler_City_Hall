@@ -106,8 +106,8 @@
                                 {% endif %}
                                 <th>Destination</th>
                                 <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Status</th>
+<th><i class="bi bi-calendar-check"></i> End Date</th>
+<th><i class="bi bi-tag"></i> Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -121,11 +121,12 @@
                                 <td>{{ ticket.destination }}</td>
                                 <td>{{ ticket.start_date.strftime('%Y-%m-%d') if ticket.start_date else '-' }}</td>
                                 <td>{{ ticket.end_date.strftime('%Y-%m-%d') if ticket.end_date else '-' }}</td>
-                                <td>
-                                    <span class="status-badge status-{{ ticket.status }}">
-                                        {{ ticket.status|replace('_', ' ')|title }}
-                                    </span>
-                                </td>
+<td>
+    <span class="status-badge status-{{ ticket.status }} px-2 py-1">
+        <i class="bi bi-circle-fill me-1" style="font-size: 0.6em;"></i>
+        {{ ticket.status|replace('_', ' ')|title }}
+    </span>
+</td>
                                 <td>
                                     <i class="bi bi-chevron-right text-muted"></i>
                                 </td>
