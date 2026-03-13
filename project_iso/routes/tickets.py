@@ -574,3 +574,43 @@ def reject(ticket_id):
         flash(f'Error rejecting ticket: {str(e)}', 'danger')
     
     return redirect(url_for('tickets.view', ticket_id=ticket_id))
+
+
+@tickets_bp.route('/<int:ticket_id>/assign_vehicle', methods=['POST'])
+def assign_vehicle(ticket_id):
+    """Assign vehicle to approved ticket (admin only)"""
+    if not require_login() or session.get('role') != 'admin':
+        flash('Access denied', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    vehicle_assigned = request.form.get('vehicle_assigned', '').strip()
+    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
+    
+    if not vehicle_assigned:
+        flash('Vehicle selection is required', 'danger')
+        return redirect(url_for('tickets.view', ticket_id=ticket_id))
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if db_type == 'sqlite':
+            cursor.execute("UPDATE tickets SET vehicle_assigned = ? WHERE id = ? AND status = 'approved'", (vehicle_assigned, ticket_id))
+            rows_affected = cursor.rowcount
+        else:
+            cursor.execute("UPDATE tickets SET vehicle_assigned = %s WHERE id = %s AND status = 'approved'", (vehicle_assigned, ticket_id))
+            rows_affected = cursor.rowcount
+        
+        conn.commit()
+        conn.close()
+        
+        if rows_affected > 0:
+            flash(f'Vehicle {vehicle_assigned} assigned to ticket #{ticket_id}', 'success')
+        else:
+            flash('Ticket not found or not approved', 'danger')
+            
+    except Exception as e:
+        flash(f'Error assigning vehicle: {str(e)}', 'danger')
+    
+    return redirect(url_for('tickets.view', ticket_id=ticket_id))
+

@@ -27,7 +27,7 @@ def init_db():
         # Create database
         print(f"Creating database '{MYSQL_DATABASE}'...")
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {MYSQL_DATABASE}")
-        conn.close()
+        conn.close(
         
         # Now connect to the database
         print(f"Connecting to database '{MYSQL_DATABASE}'...")

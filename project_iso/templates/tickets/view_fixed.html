@@ -17,6 +17,7 @@
             <i class="bi bi-arrow-left"></i> Back
         </a>
     </div>
+</div>
 
 <div class="row">
     <div class="col-lg-8 col-md-7 col-sm-12">
@@ -54,6 +55,7 @@
                         </p>
                         {% endif %}
                     </div>
+                </div>
                 <hr>
                 <div class="row">
                     <div class="col-12">
@@ -61,7 +63,9 @@
                         <div class="bg-light p-3 rounded">
                             {{ ticket.purpose }}
                         </div>
+                    </div>
                 </div>
+            </div>
         </div>
 
         <!-- Approval History -->
@@ -99,6 +103,7 @@
                                 <p class="mb-0 text-muted"><em>"{{ approval.comments }}"</em></p>
                                 {% endif %}
                             </div>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -106,6 +111,7 @@
                 <p class="text-muted text-center">No approval actions yet.</p>
                 {% endif %}
             </div>
+        </div>
 
         <!-- Approval/Rejection Form (for directors and final authorizers) -->
         {% if session.get('role') == 'final_authorizer' and ticket.status == 'director_approved' %}
@@ -178,39 +184,40 @@
     <div class="col-lg-4 col-md-5 col-sm-12">
         <!-- Status Timeline -->
         <div class="card status-timeline">
-            <div class="card-header bg-transparent">
-                <h5 class="mb-0 d-flex align-items-center gap-2"> <i class="bi bi-diagram-3"></i> Status Timeline </h5>
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-diagram-3"></i> Status Timeline</h5>
             </div>
             <div class="card-body">
-        <div class="d-inline-block text-start">
-            <div class="d-flex align-items-center mb-3">
-                <div class="bg-{{ 'success' if ticket.status in ['pending', 'director_approved', 'approved'] else 'secondary' }} text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; flex-shrink: 0;">
-                1
+                <div class="d-flex flex-column">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-{{ 'success' if ticket.status in ['pending', 'director_approved', 'approved'] else 'secondary' }} text-white rounded-circle p-2 me-3" style="width: 32px; height: 32px; text-align: center;">
+                            1
+                        </div>
+                        <div>
+                            <div class="fw-bold">Submitted</div>
+                            <small class="text-muted">Request created</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-{{ 'success' if ticket.status in ['director_approved', 'approved'] else 'secondary' }} text-white rounded-circle p-2 me-3" style="width: 32px; height: 32px; text-align: center;">
+                            2
+                        </div>
+                        <div>
+                            <div class="fw-bold">Director Approval</div>
+                            <small class="text-muted">{{ 'Approved' if ticket.status in ['director_approved', 'approved'] else 'Pending' }}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-{{ 'success' if ticket.status == 'approved' else 'secondary' }} text-white rounded-circle p-2 me-3" style="width: 32px; height: 32px; text-align: center;">
+                            3
+                        </div>
+                        <div>
+                            <div class="fw-bold">Final Authorization</div>
+                            <small class="text-muted">{{ 'Approved' if ticket.status == 'approved' else 'Pending' }}</small>
+                        </div>
+                    </div>
                 </div>
-            <div class="text-nowrap">
-                <div class="fw-bold">Submitted</div>
-                <small class="text-muted d-block">Request created</small>
             </div>
-        </div> 
-            <div class="d-flex align-items-center mb-3">
-                <div class="bg-{{ 'success' if ticket.status in ['director_approved', 'approved'] else 'secondary' }} text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; flex-shrink: 0;">
-                2
-                </div>
-            <div class="text-nowrap">
-                <div class="fw-bold">Director Approval</div>
-                <small class="text-muted d-block">{{ 'Approved' if ticket.status in ['director_approved', 'approved'] else 'Pending' }}</small>
-                </div>
-            </div> 
-            <div class="d-flex align-items-center">
-                <div class="bg-{{ 'success' if ticket.status == 'approved' else 'secondary' }} text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; flex-shrink: 0;">
-                3
-                </div>
-                <div class="text-nowrap">
-                <div class="fw-bold">Final Authorization</div>
-                <small class="text-muted d-block">{{ 'Approved' if ticket.status == 'approved' else 'Pending' }}</small>
-            </div>
-        </div> </div>
-</div>
         </div>
     </div>
 </div>

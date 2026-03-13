@@ -108,12 +108,11 @@
                                 <th>Start Date</th>
                                 <th>End Date</th>
                                 <th>Status</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for ticket in recent_tickets %}
-                            <tr>
+                            <tr class="ticket-row" data-ticket-id="{{ ticket.id }}">
                                 <td>#{{ ticket.id }}</td>
                                 {% if user_role != 'employee' %}
                                 <td>{{ ticket.user_name }}</td>
@@ -128,9 +127,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('tickets.view', ticket_id=ticket.id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye"></i> View
-                                    </a>
+                                    <i class="bi bi-chevron-right text-muted"></i>
                                 </td>
                             </tr>
                             {% endfor %}
