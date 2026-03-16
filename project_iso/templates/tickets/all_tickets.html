@@ -45,6 +45,7 @@
                         <th>Associates</th>
                         <th>Start Date</th>
                         <th>End Date</th>
+                        <th>Vehicle</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -58,6 +59,9 @@
                         <td>{{ ticket.associates if ticket.associates else '-' }}</td>
                         <td>{{ ticket.start_date.strftime('%Y-%m-%d') if ticket.start_date else '-' }}</td>
                         <td>{{ ticket.end_date.strftime('%Y-%m-%d') if ticket.end_date else '-' }}</td>
+                        <td>
+                            {{ ticket.vehicle_name if ticket.vehicle_name else '-' }}
+                        </td>
                         <td>
                             <span class="status-badge status-{{ ticket.status }}">
                                 {{ ticket.status|replace('_', ' ')|title }}

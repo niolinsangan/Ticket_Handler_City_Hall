@@ -5,31 +5,7 @@ from datetime import datetime
 from config import Config
 
 tickets_bp = Blueprint('tickets', __name__)
-
-
-def get_db_connection():
-    """Get database connection based on configuration"""
-    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
-    
-    if db_type == 'sqlite':
-        conn = sqlite3.connect(Config.SQLITE_DATABASE)
-        conn.row_factory = sqlite3.Row
-        return conn
-    else:
-        return pymysql.connect(
-            host=Config.MYSQL_HOST,
-            user=Config.MYSQL_USER,
-            password=Config.MYSQL_PASSWORD,
-            database=Config.MYSQL_DATABASE,
-            cursorclass=pymysql.cursors.DictCursor
-        )
-
-
-def dict_from_row(row):
-    """Convert sqlite3.Row to dict"""
-    if row is None:
-        return None
-    return dict(zip(row.keys(), row))
+from db import get_db_connection, dict_from_row, get_db_type
 
 
 def require_login():
@@ -44,6 +20,114 @@ def require_role(roles):
     if isinstance(roles, str):
         roles = [roles]
     return session.get('role') in roles
+
+
+def get_available_vehicles():
+    """Get list of available vehicles for assignment"""
+    db_type = get_db_type()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if db_type == 'sqlite':
+            cursor.execute("SELECT id, name FROM vehicles WHERE status = 'available' ORDER BY name")
+        else:
+            cursor.execute("SELECT id, name FROM vehicles WHERE status = 'available' ORDER BY name")
+        
+        if db_type == 'sqlite':
+            rows = cursor.fetchall()
+            vehicles = [dict_from_row(row) for row in rows]
+        else:
+            vehicles = cursor.fetchall()
+        
+        conn.close()
+        return vehicles
+    except Exception as e:
+        print(f"Error getting vehicles: {e}")
+        return []
+
+
+@tickets_bp.route('/vehicles', methods=['GET', 'POST'])
+def vehicles():
+    """Admin vehicle management"""
+    if not require_login() or session.get('role') != 'admin':
+        flash('Access denied', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    db_type = get_db_type()
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'add':
+            name = request.form.get('name', '').strip()
+            vehicle_type = request.form.get('vehicle_type', 'car')
+            status = request.form.get('status', 'available')
+            if name:
+                try:
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    if db_type == 'sqlite':
+                        cursor.execute("INSERT INTO vehicles (name, vehicle_type, status) VALUES (?, ?, ?)", (name, vehicle_type, status))
+                    else:
+                        cursor.execute("INSERT INTO vehicles (name, vehicle_type, status) VALUES (%s, %s, %s)", (name, vehicle_type, status))
+                    conn.commit()
+                    conn.close()
+                    flash(f'Vehicle {name} added.', 'success')
+                except Exception as e:
+                    flash(f'Error adding vehicle: {e}', 'danger')
+            else:
+                flash('Name is required', 'danger')
+        elif action == 'delete':
+            vehicle_id = request.form.get('vehicle_id')
+            if vehicle_id:
+                try:
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    if db_type == 'sqlite':
+                        cursor.execute("DELETE FROM vehicles WHERE id = ?", (vehicle_id,))
+                    else:
+                        cursor.execute("DELETE FROM vehicles WHERE id = %s", (vehicle_id,))
+                    conn.commit()
+                    conn.close()
+                    flash('Vehicle deleted.', 'success')
+                except Exception as e:
+                    flash(f'Error deleting vehicle: {e}', 'danger')
+        elif action == 'update_status':
+            vehicle_id = request.form.get('vehicle_id')
+            new_status = request.form.get('new_status')
+            if vehicle_id and new_status in ['available', 'assigned', 'maintenance']:
+                try:
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    if db_type == 'sqlite':
+                        cursor.execute("UPDATE vehicles SET status = ? WHERE id = ?", (new_status, vehicle_id))
+                    else:
+                        cursor.execute("UPDATE vehicles SET status = %s WHERE id = %s", (new_status, vehicle_id))
+                    conn.commit()
+                    conn.close()
+                    flash(f'Vehicle status updated to {new_status}.', 'success')
+                except Exception as e:
+                    flash(f'Error updating status: {e}', 'danger')
+    
+    # Get all vehicles
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        if db_type == 'sqlite':
+            cursor.execute("SELECT * FROM vehicles ORDER BY name")
+        else:
+            cursor.execute("SELECT * FROM vehicles ORDER BY name")
+        if db_type == 'sqlite':
+            rows = cursor.fetchall()
+            vehicles = [dict_from_row(row) for row in rows]
+        else:
+            vehicles = cursor.fetchall()
+        conn.close()
+    except Exception as e:
+        flash(f'Error loading vehicles: {e}', 'danger')
+        vehicles = []
+    
+    return render_template('tickets/vehicles.html', vehicles=vehicles)
 
 
 @tickets_bp.route('/')
@@ -65,21 +149,22 @@ def all_tickets():
         return redirect(url_for('main.dashboard'))
     
     status_filter = request.args.get('status', '')
-    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
+    db_type = get_db_type()
     
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
         query = """
-            SELECT t.*, u.full_name as user_name, d.name as division_name
+            SELECT t.*, u.full_name as user_name, d.name as division_name,
+                   v.name as vehicle_name
             FROM tickets t
-            JOIN users u ON t.user_id = u.id
-            JOIN divisions d ON t.division_id = d.id
+            LEFT JOIN users u ON t.user_id = u.id
+            LEFT JOIN divisions d ON t.division_id = d.id
+            LEFT JOIN vehicles v ON t.vehicle_assigned = v.name
         """
         
         if status_filter:
-            # Validate status_filter to prevent SQL injection
             allowed_statuses = ['pending', 'director_approved', 'approved', 'rejected']
             if status_filter in allowed_statuses:
                 if db_type == 'sqlite':
@@ -90,10 +175,12 @@ def all_tickets():
                     params = (status_filter,)
             else:
                 params = ()
+        else:
+            params = ()
         
         query += " ORDER BY t.created_at DESC"
         
-        if status_filter and status_filter in allowed_statuses:
+        if params:
             cursor.execute(query, params)
         else:
             cursor.execute(query)
@@ -106,13 +193,12 @@ def all_tickets():
         
         conn.close()
         
-        # Convert date strings to datetime objects for strftime in templates
+        # Convert dates
         for ticket in tickets:
             if ticket.get('start_date') and isinstance(ticket.get('start_date'), str):
                 ticket['start_date'] = datetime.strptime(ticket['start_date'], '%Y-%m-%d').date()
             if ticket.get('end_date') and isinstance(ticket.get('end_date'), str):
                 ticket['end_date'] = datetime.strptime(ticket['end_date'], '%Y-%m-%d').date()
-                
             
     except Exception as e:
         flash(f'Error loading tickets: {str(e)}', 'danger')
@@ -347,27 +433,31 @@ def view(ticket_id):
     if not require_login():
         return redirect(url_for('auth.login'))
     
-    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
+    db_type = get_db_type()
     
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Get ticket
+        # Get ticket with vehicle info
         if db_type == 'sqlite':
             cursor.execute("""
-                SELECT t.*, u.full_name as user_name, d.name as division_name
+                SELECT t.*, u.full_name as user_name, d.name as division_name,
+                       v.name as vehicle_name, v.status as vehicle_status
                 FROM tickets t
                 JOIN users u ON t.user_id = u.id
                 JOIN divisions d ON t.division_id = d.id
+                LEFT JOIN vehicles v ON t.vehicle_assigned = v.name
                 WHERE t.id = ?
             """, (ticket_id,))
         else:
             cursor.execute("""
-                SELECT t.*, u.full_name as user_name, d.name as division_name
+                SELECT t.*, u.full_name as user_name, d.name as division_name,
+                       v.name as vehicle_name, v.status as vehicle_status
                 FROM tickets t
                 JOIN users u ON t.user_id = u.id
                 JOIN divisions d ON t.division_id = d.id
+                LEFT JOIN vehicles v ON t.vehicle_assigned = v.name
                 WHERE t.id = %s
             """, (ticket_id,))
         
@@ -381,6 +471,9 @@ def view(ticket_id):
         if session.get('role') == 'employee' and ticket['user_id'] != session['user_id']:
             flash('Access denied', 'danger')
             return redirect(url_for('main.dashboard'))
+        
+        # Get available vehicles for admin
+        available_vehicles = get_available_vehicles() if session.get('role') == 'admin' else []
         
         # Get approval history
         if db_type == 'sqlite':
@@ -408,13 +501,12 @@ def view(ticket_id):
         
         conn.close()
         
-        # Convert date strings to datetime objects for strftime in templates
+        # Convert dates
         if ticket.get('start_date') and isinstance(ticket.get('start_date'), str):
             ticket['start_date'] = datetime.strptime(ticket['start_date'], '%Y-%m-%d').date()
         if ticket.get('end_date') and isinstance(ticket.get('end_date'), str):
             ticket['end_date'] = datetime.strptime(ticket['end_date'], '%Y-%m-%d').date()
         
-        # Convert approval timestamps as well
         for approval in approvals:
             if approval.get('created_at') and isinstance(approval.get('created_at'), str):
                 approval['created_at'] = datetime.strptime(approval['created_at'], '%Y-%m-%d %H:%M:%S')
@@ -423,7 +515,7 @@ def view(ticket_id):
         flash(f'Error loading ticket: {str(e)}', 'danger')
         return redirect(url_for('main.dashboard'))
     
-    return render_template('tickets/view.html', ticket=ticket, approvals=approvals)
+    return render_template('tickets/view.html', ticket=ticket, approvals=approvals, available_vehicles=available_vehicles)
 
 
 @tickets_bp.route('/<int:ticket_id>/approve', methods=['POST'])

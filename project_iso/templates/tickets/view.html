@@ -44,14 +44,48 @@
                         <p><strong><i class="bi bi-car"></i> Vehicle Needed:</strong> 
                             {% if ticket.vehicle_needed == 'yes' %}
                             <span class="badge bg-success">Yes</span>
-                            {% else %}
-                            <span class="badge bg-secondary">No</span>
                             {% endif %}
                         </p>
                         {% if ticket.vehicle_assigned %}
-                        <p><strong><i class="bi bi-car-front"></i> Vehicle Assigned:</strong> 
-                            <span class="badge bg-primary">{{ ticket.vehicle_assigned }}</span>
-                        </p>
+                        <div class="alert alert-success">
+                            <strong><i class="bi bi-car-front"></i> Assigned Vehicle:</strong> {{ ticket.vehicle_name or ticket.vehicle_assigned }}
+                            {% if ticket.vehicle_status %}
+                            <small class="text-muted">(Status: {{ ticket.vehicle_status }})</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% if session.role == 'admin' and ticket.vehicle_needed == 'yes' %}
+                        {% if ticket.vehicle_assigned %}
+                        <div class="alert alert-info">
+                            <strong>Assigned Vehicle:</strong> {{ ticket.vehicle_name or ticket.vehicle_assigned }} 
+                            {% if ticket.vehicle_status %}
+                            <small>(Status: {{ ticket.vehicle_status }})</small>
+                            {% endif %}
+                            <form method="POST" action="{{ url_for('tickets.assign_vehicle', ticket_id=ticket.id) }}" class="d-inline ms-3">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="vehicle_assigned" value="">
+                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-arrow-repeat"></i> Reassign
+                                </button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('tickets.assign_vehicle', ticket_id=ticket.id) }}" class="mt-3">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <label class="form-label">Assign Vehicle:</label>
+                            <div class="input-group">
+                                <select class="form-select" name="vehicle_assigned" required>
+                                    <option value="">Select from available...</option>
+                                    {% for vehicle in available_vehicles %}
+                                    <option value="{{ vehicle.name }}">{{ vehicle.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg"></i> Assign
+                                </button>
+                            </div>
+                        </form>
+                        {% endif %}
                         {% endif %}
                     </div>
                 <hr>

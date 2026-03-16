@@ -98,7 +98,7 @@ def init_sqlite_db(app):
         )
     """)
     
-    # Create approvals table
+# Create approvals table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS approvals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,6 +112,24 @@ def init_sqlite_db(app):
             FOREIGN KEY (approver_id) REFERENCES users(id)
         )
     """)
+
+    # Create vehicles table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS vehicles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(100) NOT NULL UNIQUE,
+            vehicle_type VARCHAR(50) DEFAULT 'car',
+            status VARCHAR(20) DEFAULT 'available',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Seed vehicles if empty
+    cursor.execute("SELECT COUNT(*) FROM vehicles")
+    if cursor.fetchone()[0] == 0:
+        vehicles = ['car 1', 'car 2', 'car 3', 'car 4']
+        for vehicle in vehicles:
+            cursor.execute("INSERT INTO vehicles (name) VALUES (?)", (vehicle,))
     
     # Insert default divisions
     cursor.execute("SELECT COUNT(*) FROM divisions")
@@ -242,7 +260,7 @@ def init_mysql_db(app):
             )
         """)
         
-        # Create approvals table
+# Create approvals table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS approvals (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -256,6 +274,24 @@ def init_mysql_db(app):
                 FOREIGN KEY (approver_id) REFERENCES users(id)
             )
         """)
+
+        # Create vehicles table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS vehicles (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL UNIQUE,
+                vehicle_type VARCHAR(50) DEFAULT 'car',
+                status ENUM('available', 'assigned', 'maintenance') DEFAULT 'available',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Seed vehicles if empty
+        cursor.execute("SELECT COUNT(*) FROM vehicles")
+        if cursor.fetchone()[0] == 0:
+            vehicles = ['car 1', 'car 2', 'car 3', 'car 4']
+            for vehicle in vehicles:
+                cursor.execute("INSERT INTO vehicles (name) VALUES (%s)", (vehicle,))
         
         # Insert default divisions
         cursor.execute("SELECT COUNT(*) FROM divisions")
