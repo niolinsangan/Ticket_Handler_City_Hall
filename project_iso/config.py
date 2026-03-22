@@ -5,16 +5,16 @@ load_dotenv()
 
 class Config:
     """Base configuration"""
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY')
     
     # Database choice: 'mysql' or 'sqlite'
     DATABASE_TYPE = os.environ.get('DATABASE_TYPE', 'sqlite')
     
     # MySQL Configuration
-    MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
-    MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
-    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'antonio123')
-    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE', 'city_enro_travel')
+    MYSQL_HOST = os.environ.get('MYSQL_HOST')
+    MYSQL_USER = os.environ.get('MYSQL_USER')
+    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
     
     # MySQL URI format
     MYSQL_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DATABASE}"

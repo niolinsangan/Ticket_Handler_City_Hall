@@ -44,6 +44,7 @@ def login():
             flash('Username and password are required', 'danger')
             return render_template('auth/login.html', layout='minimal')
         
+        conn = None
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -57,8 +58,6 @@ def login():
             else:
                 cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
                 user = cursor.fetchone()
-            
-            conn.close()
             
             if user and bcrypt.check_password_hash(user['password'], password):
                 session['user_id'] = user['id']
@@ -81,6 +80,9 @@ def login():
                 
         except Exception as e:
             flash(f'Login error: {str(e)}', 'danger')
+        finally:
+            if conn:
+                conn.close()
     
     return render_template('auth/login.html', layout='minimal')
 

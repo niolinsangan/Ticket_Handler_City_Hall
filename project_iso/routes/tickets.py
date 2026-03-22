@@ -63,6 +63,7 @@ def vehicles():
             vehicle_type = request.form.get('vehicle_type', 'car')
             status = request.form.get('status', 'available')
             if name:
+                conn = None
                 try:
                     conn = get_db_connection()
                     cursor = conn.cursor()
@@ -71,15 +72,20 @@ def vehicles():
                     else:
                         cursor.execute("INSERT INTO vehicles (name, vehicle_type, status) VALUES (%s, %s, %s)", (name, vehicle_type, status))
                     conn.commit()
-                    conn.close()
                     flash(f'Vehicle {name} added.', 'success')
                 except Exception as e:
+                    if conn:
+                        conn.rollback()
                     flash(f'Error adding vehicle: {e}', 'danger')
+                finally:
+                    if conn:
+                        conn.close()
             else:
                 flash('Name is required', 'danger')
         elif action == 'delete':
             vehicle_id = request.form.get('vehicle_id')
             if vehicle_id:
+                conn = None
                 try:
                     conn = get_db_connection()
                     cursor = conn.cursor()
@@ -88,14 +94,19 @@ def vehicles():
                     else:
                         cursor.execute("DELETE FROM vehicles WHERE id = %s", (vehicle_id,))
                     conn.commit()
-                    conn.close()
                     flash('Vehicle deleted.', 'success')
                 except Exception as e:
+                    if conn:
+                        conn.rollback()
                     flash(f'Error deleting vehicle: {e}', 'danger')
+                finally:
+                    if conn:
+                        conn.close()
         elif action == 'update_status':
             vehicle_id = request.form.get('vehicle_id')
             new_status = request.form.get('new_status')
             if vehicle_id and new_status in ['available', 'assigned', 'maintenance']:
+                conn = None
                 try:
                     conn = get_db_connection()
                     cursor = conn.cursor()
@@ -104,12 +115,17 @@ def vehicles():
                     else:
                         cursor.execute("UPDATE vehicles SET status = %s WHERE id = %s", (new_status, vehicle_id))
                     conn.commit()
-                    conn.close()
                     flash(f'Vehicle status updated to {new_status}.', 'success')
                 except Exception as e:
+                    if conn:
+                        conn.rollback()
                     flash(f'Error updating status: {e}', 'danger')
+                finally:
+                    if conn:
+                        conn.close()
     
     # Get all vehicles
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -122,10 +138,12 @@ def vehicles():
             vehicles = [dict_from_row(row) for row in rows]
         else:
             vehicles = cursor.fetchall()
-        conn.close()
     except Exception as e:
         flash(f'Error loading vehicles: {e}', 'danger')
         vehicles = []
+    finally:
+        if conn:
+            conn.close()
     
     return render_template('tickets/vehicles.html', vehicles=vehicles)
 
@@ -268,6 +286,11 @@ def create():
         flash('Only employees can create travel requests', 'warning')
         return redirect(url_for('main.dashboard'))
     
+    division_id = session.get('division_id')
+    if not division_id:
+        flash('You do not have a division assigned and cannot create tickets.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
     db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
     
     if request.method == 'POST':
@@ -294,6 +317,7 @@ def create():
                 flash(error, 'danger')
             return redirect(url_for('tickets.create'))
         
+        conn = None
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -302,21 +326,25 @@ def create():
                 cursor.execute("""
                     INSERT INTO tickets (user_id, division_id, destination, purpose, associates, start_date, end_date, vehicle_needed, status)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-                """, (session['user_id'], session['division_id'], destination, purpose, associates, start_date, end_date, vehicle_needed))
+                """, (session['user_id'], division_id, destination, purpose, associates, start_date, end_date, vehicle_needed))
             else:
                 cursor.execute("""
                     INSERT INTO tickets (user_id, division_id, destination, purpose, associates, start_date, end_date, vehicle_needed, status)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
-                """, (session['user_id'], session['division_id'], destination, purpose, associates, start_date, end_date, vehicle_needed))
+                """, (session['user_id'], division_id, destination, purpose, associates, start_date, end_date, vehicle_needed))
             
             conn.commit()
-            conn.close()
             
             flash('Travel request submitted successfully!', 'success')
             return redirect(url_for('tickets.my_tickets'))
             
         except Exception as e:
+            if conn:
+                conn.rollback()
             flash(f'Error creating ticket: {str(e)}', 'danger')
+        finally:
+            if conn:
+                conn.close()
     
     # Get user's division
     division_name = ''
@@ -325,9 +353,9 @@ def create():
         cursor = conn.cursor()
         
         if db_type == 'sqlite':
-            cursor.execute("SELECT name FROM divisions WHERE id = ?", (session.get('division_id'),))
+            cursor.execute("SELECT name FROM divisions WHERE id = ?", (division_id,))
         else:
-            cursor.execute("SELECT name FROM divisions WHERE id = %s", (session.get('division_id'),))
+            cursor.execute("SELECT name FROM divisions WHERE id = %s", (division_id,))
         
         result = dict_from_row(cursor.fetchone()) if db_type == 'sqlite' else cursor.fetchone()
         if result:
@@ -344,13 +372,13 @@ def edit(ticket_id):
     """Edit existing travel request (only for pending tickets)"""
     if not require_login():
         return redirect(url_for('auth.login'))
-    
+
     db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
-    
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Get ticket
         if db_type == 'sqlite':
             cursor.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,))
@@ -358,22 +386,21 @@ def edit(ticket_id):
             cursor.execute("SELECT * FROM tickets WHERE id = %s", (ticket_id,))
         
         ticket = dict_from_row(cursor.fetchone()) if db_type == 'sqlite' else cursor.fetchone()
-        
+
         if not ticket:
             flash('Ticket not found', 'danger')
             return redirect(url_for('main.dashboard'))
-        
+
         # Check if user owns the ticket
         if ticket['user_id'] != session['user_id']:
             flash('Access denied', 'danger')
             return redirect(url_for('main.dashboard'))
-        
+
         # Only allow editing pending tickets
         if ticket['status'] != 'pending':
             flash('Only pending tickets can be edited', 'warning')
             return redirect(url_for('tickets.view', ticket_id=ticket_id))
-        
-        # Handle form submission
+
         if request.method == 'POST':
             destination = request.form.get('destination', '').strip()
             purpose = request.form.get('purpose', '').strip()
@@ -381,7 +408,7 @@ def edit(ticket_id):
             start_date = request.form.get('start_date')
             end_date = request.form.get('end_date')
             vehicle_needed = 'yes' if request.form.get('vehicle_needed') else 'no'
-            
+
             # Validation
             errors = []
             if not destination:
@@ -392,12 +419,12 @@ def edit(ticket_id):
                 errors.append('Start and end dates are required')
             if start_date and end_date and start_date > end_date:
                 errors.append('End date must be after start date')
-            
+
             if errors:
                 for error in errors:
                     flash(error, 'danger')
                 return redirect(url_for('tickets.edit', ticket_id=ticket_id))
-            
+
             # Update ticket
             if db_type == 'sqlite':
                 cursor.execute("""
@@ -411,19 +438,20 @@ def edit(ticket_id):
                     SET destination = %s, purpose = %s, associates = %s, start_date = %s, end_date = %s, vehicle_needed = %s
                     WHERE id = %s
                 """, (destination, purpose, associates, start_date, end_date, vehicle_needed, ticket_id))
-            
+
             conn.commit()
-            conn.close()
-            
             flash('Travel request updated successfully!', 'success')
             return redirect(url_for('tickets.view', ticket_id=ticket_id))
-        
-        conn.close()
-        
+
     except Exception as e:
-        flash(f'Error loading ticket: {str(e)}', 'danger')
+        if conn:
+            conn.rollback()
+        flash(f'Error loading or updating ticket: {str(e)}', 'danger')
         return redirect(url_for('main.dashboard'))
-    
+    finally:
+        if conn:
+            conn.close()
+
     return render_template('tickets/edit.html', ticket=ticket)
 
 
@@ -532,6 +560,7 @@ def approve(ticket_id):
     vehicle_assigned = request.form.get('vehicle_assigned', '').strip()
     db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
     
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -547,6 +576,11 @@ def approve(ticket_id):
         if not ticket:
             flash('Ticket not found', 'danger')
             return redirect(url_for('tickets.all_tickets'))
+        
+        # Prevent users from approving their own tickets
+        if ticket['user_id'] == session['user_id']:
+            flash('You cannot approve your own ticket.', 'danger')
+            return redirect(url_for('tickets.view', ticket_id=ticket_id))
         
         # Determine approval level and new status
         if session.get('role') == 'final_authorizer' and ticket['status'] == 'director_approved':
@@ -586,12 +620,16 @@ def approve(ticket_id):
             """, (ticket_id, session['user_id'], level, comments))
         
         conn.commit()
-        conn.close()
         
         flash(f'Ticket #{ticket_id} approved successfully!', 'success')
         
     except Exception as e:
+        if conn:
+            conn.rollback()
         flash(f'Error approving ticket: {str(e)}', 'danger')
+    finally:
+        if conn:
+            conn.close()
     
     return redirect(url_for('tickets.view', ticket_id=ticket_id))
 
@@ -613,6 +651,7 @@ def reject(ticket_id):
         flash('Rejection reason is required', 'danger')
         return redirect(url_for('tickets.view', ticket_id=ticket_id))
     
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -629,6 +668,10 @@ def reject(ticket_id):
             flash('Ticket not found', 'danger')
             return redirect(url_for('tickets.all_tickets'))
         
+        if ticket['user_id'] == session['user_id']:
+            flash('You cannot reject your own ticket.', 'danger')
+            return redirect(url_for('tickets.view', ticket_id=ticket_id))
+
         if ticket['status'] in ['approved', 'rejected']:
             flash('Ticket already processed', 'warning')
             return redirect(url_for('tickets.view', ticket_id=ticket_id))
@@ -658,12 +701,16 @@ def reject(ticket_id):
             """, (ticket_id, session['user_id'], level, comments))
         
         conn.commit()
-        conn.close()
         
         flash(f'Ticket #{ticket_id} has been rejected', 'warning')
         
     except Exception as e:
+        if conn:
+            conn.rollback()
         flash(f'Error rejecting ticket: {str(e)}', 'danger')
+    finally:
+        if conn:
+            conn.close()
     
     return redirect(url_for('tickets.view', ticket_id=ticket_id))
 
@@ -682,6 +729,7 @@ def assign_vehicle(ticket_id):
         flash('Vehicle selection is required', 'danger')
         return redirect(url_for('tickets.view', ticket_id=ticket_id))
     
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -694,7 +742,6 @@ def assign_vehicle(ticket_id):
             rows_affected = cursor.rowcount
         
         conn.commit()
-        conn.close()
         
         if rows_affected > 0:
             flash(f'Vehicle {vehicle_assigned} assigned to ticket #{ticket_id}', 'success')
@@ -702,7 +749,12 @@ def assign_vehicle(ticket_id):
             flash('Ticket not found or not approved', 'danger')
             
     except Exception as e:
+        if conn:
+            conn.rollback()
         flash(f'Error assigning vehicle: {str(e)}', 'danger')
+    finally:
+        if conn:
+            conn.close()
     
     return redirect(url_for('tickets.view', ticket_id=ticket_id))
 
