@@ -3,12 +3,15 @@ Script to initialize MySQL database for City ENRO Travel Request System
 """
 import pymysql
 from flask_bcrypt import Bcrypt
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'antonio123'  # Update if your MySQL has a password
-MYSQL_DATABASE = 'city_enro_travel'
+MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
+MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE', 'city_enro_travel')
 
 def init_db():
     """Initialize database and create tables"""

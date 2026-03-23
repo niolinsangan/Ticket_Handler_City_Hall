@@ -1,23 +1,88 @@
+"""
+Migration script to remove estimated_cost column from both SQLite and MySQL databases.
+"""
 import sqlite3
+import pymysql
+import os
+from config import Config, config
 
-# Connect to the database
-conn = sqlite3.connect('cityhall.db')
-cursor = conn.cursor()
+def fix_db():
+    """Remove estimated_cost column from tickets table"""
+    db_type = os.getenv('DATABASE_TYPE', 'sqlite')
+    print(f"Database type: {db_type}")
 
-# Check current columns
-cursor.execute('PRAGMA table_info(tickets)')
-columns = cursor.fetchall()
-print('Current columns:', [col[1] for col in columns])
+    if db_type == 'sqlite':
+        fix_sqlite()
+    elif db_type == 'mysql':
+        fix_mysql()
+    else:
+        print(f"Unsupported database type: {db_type}")
 
-# Add vehicle_needed column if missing
-column_names = [col[1] for col in columns]
-if 'vehicle_needed' not in column_names:
-    cursor.execute('ALTER TABLE tickets ADD COLUMN vehicle_needed VARCHAR(10) DEFAULT "no"')
-    print('Added vehicle_needed column')
-if 'vehicle_assigned' not in column_names:
-    cursor.execute('ALTER TABLE tickets ADD COLUMN vehicle_assigned VARCHAR(100)')
-    print('Added vehicle_assigned column')
+def fix_sqlite():
+    """Fix SQLite database"""
+    db_path = Config.SQLITE_DATABASE
+    
+    if not os.path.exists(db_path):
+        print(f"Database not found at {db_path}")
+        return
+    
+    print(f"Connecting to SQLite database at {db_path}...")
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Get current columns
+    cursor.execute("PRAGMA table_info(tickets)")
+    columns = [col[1] for col in cursor.fetchall()]
+    print(f"Current columns in tickets table: {columns}")
+    
+    # Check if estimated_cost column exists
+    if 'estimated_cost' in columns:
+        print("Found 'estimated_cost' column in SQLite database.")
+        print("SQLite does not support dropping columns in a straightforward way.")
+        print("The recommended approach is to recreate the table and copy the data.")
+        print("Since the 'estimated_cost' column is no longer used by the application, you can choose to ignore this column or remove it manually using a database browser.")
+    else:
+        print("'estimated_cost' column not found in tickets table.")
+    
+    conn.close()
+    print("SQLite check completed.")
 
-conn.commit()
-conn.close()
-print('Done!')
+def fix_mysql():
+    """Fix MySQL database"""
+    try:
+        # Now connect to the database
+        print(f"Connecting to MySQL database...")
+        conn = pymysql.connect(
+            host=os.getenv('MYSQL_HOST'),
+            user=os.getenv('MYSQL_USER'),
+            password=os.getenv('MYSQL_PASSWORD'),
+            database=os.getenv('MYSQL_DATABASE')
+        )
+        cursor = conn.cursor()
+        
+        # Check if estimated_cost column exists
+        cursor.execute("SHOW COLUMNS FROM tickets LIKE 'estimated_cost'")
+        result = cursor.fetchone()
+        
+        if result:
+            print("Found 'estimated_cost' column in MySQL database. Dropping it...")
+            cursor.execute("ALTER TABLE tickets DROP COLUMN estimated_cost")
+            print("Dropped 'estimated_cost' column.")
+        else:
+            print("'estimated_cost' column not found in tickets table.")
+            
+        conn.commit()
+        conn.close()
+        print("MySQL check completed.")
+        
+    except pymysql.err.OperationalError as e:
+        print(f"\nMySQL Connection Error: {e}")
+        print("\nPlease check:")
+        print("  1. MySQL service is running")
+        print("  2. Username and password are correct")
+        print("  3. MySQL is accessible on localhost")
+    except Exception as e:
+        print(f"\nError: {e}")
+
+if __name__ == '__main__':
+    fix_db()

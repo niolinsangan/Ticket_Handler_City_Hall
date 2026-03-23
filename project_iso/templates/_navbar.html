@@ -1,3 +1,14 @@
+<style>
+    navbar .role-badge {
+        font-size: 0.75rem;
+        padding: 0.25em 0.5em;
+        border-radius: 0.25rem;
+        color: #fff;
+        margin-left: 0.5em;
+        padding-top: 100px;
+        padding-bottom: 100px;
+    }
+</style>
 <nav class="navbar navbar-expand-lg navbar-dark mb-4">
     <div class="container">
         <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
@@ -8,6 +19,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
+                {% if session.get('user_id') %}
                 {% if session.get('role') == 'employee' %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('main.dashboard') }}">
@@ -43,10 +55,12 @@
                 </li>
                 {% endif %}
                 {% endif %}
+                {% endif %}
+                {% if session.get('user_id') %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle"></i> {{ session.get('full_name') }}
-                        <span class="role-badge role-{{ session.get('role') }}">{{ session.get('role') }}</span>
+                        <i class="bi bi-person-circle"></i> {{ session.full_name or session.username or 'User' }}
+                        <span class="role-badge role-{{ session.role }}">{{ session.role }}</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
@@ -54,6 +68,7 @@
                         </a></li>
                     </ul>
                 </li>
+                {% endif %}
             </ul>
         </div>
     </div>
