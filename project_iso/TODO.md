@@ -1,14 +1,19 @@
-# TODO: Admin Vehicle Assignment Implementation
-Status: Approved (seed: car 1, car 2, car 3, car 4)
+# CITY HALL TICKET SYSTEM - INCREASE /TICKETS/ VIEW WIDTH
 
-## Steps:
-- [x] 1. Add vehicles table to app.py (SQLite & MySQL init_db) + seed cars
-- [x] 2. Create migrate_add_vehicles.py and run it (success: cars 1-4 added)
-- [x] 3. Update routes/tickets.py (new routes, update view/all_tickets/approve/assign)
-- [x] 4. Update templates/tickets/all_tickets.html (add vehicle column)
-- [x] 5. Update templates/tickets/view.html (admin vehicle form)
-- [x] 6. Create templates/tickets/vehicles.html (management page)
-- [x] 7. Update templates/_navbar.html (admin link)
-- [x] 8. Test: migrate, run app, assign vehicles, verify list/view
+## Approved Plan Steps
+**Status: In Progress**
 
-✅ COMPLETE: Admin vehicle assignment fully implemented with fleet management.
+1. [x] Create TODO.md with breakdown ✅
+2. [x] Update base.html: Replace .container with .container-fluid + custom .wide-container (max-width: 1600px) ✅
+3. [x] Update all_tickets.html: Wrap table card in .wide-container class ✅
+4. [x] Update my_tickets.html: Wrap table card in .wide-container class ✅ 
+5. [x] Update view.html: Adjust columns to col-lg-9 / col-lg-3 + .wide-container ✅
+6. [x] Add responsive CSS in base.html: Adjust paddings, table column min-widths ✅
+7. [ ] Test: cd project_dir/Ticket_Handler_City_Hall/project_iso && flask run
+8. [ ] Verify: Wider tables on desktop, responsive mobile
+
+**Target:** +40% width on desktop (1140px → 1600px), full fluid below 1200px.
+
+**Test URLs:** 
+- http://127.0.0.1:5000/tickets/ (all_tickets or my_tickets)
+- http://127.0.0.1:5000/tickets/<id> (view.html)

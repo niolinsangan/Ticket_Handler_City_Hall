@@ -1,0 +1,49 @@
+
+Gemini said
+Based on the code you provided, the "moving back and forth" is being caused by a combination of Bootstrap's default scrollbar handling and some specific layout choices in your base.html and view.html.
+
+Here are the three specific reasons your modal and background are jumping, along with the fixes:
+
+1. The "Scrollbar Gap" Jump
+This is the most likely culprit. When the modal opens, Bootstrap adds overflow: hidden and a padding-right to your <body> to prevent double scrolling. Because your background image is set to background-attachment: fixed;, the page content shifts to fill the gap left by the disappearing scrollbar.
+
+The Fix:
+Add this to your <style> block in base.html:
+
+CSS
+/* Forces the scrollbar gutter to always exist, preventing the 'jump' */
+html {
+    overflow-y: scroll;
+}
+
+/* Overrides Bootstrap's padding injection */
+body.modal-open {
+    padding-right: 0 !important;
+}
+2. Content Injection "Pop"
+In your view.html, the modal starts with a hyphen - for the vehicle name and Loading... for the status. Your script replaces these the instant the modal starts to open. Because the text Loading... and the actual status (like assigned) have different widths, the center-aligned text in your text-center modal body  will "snap" or "wiggle" as the width recalculates.
++1
+
+The Fix:
+Give these elements a stable "footprint" so the layout doesn't shift when the text changes. Update your modal body HTML:
+
+HTML
+<h6 class="fw-bold text-primary mb-1" id="currentVehicleName" style="min-height: 1.2em;">&nbsp;</h6>
+<p class="text-muted small mb-2" id="currentVehicleStatus" style="min-height: 1.2em;">&nbsp;</p>
+Using &nbsp; (a non-breaking space) ensures the line has height even before the script runs.
+
+3. Nested Modal Issue
+In your view.html, you have the <div class="modal fade" id="reassignModal"> placed inside a <form> and several other <div> containers.
++1
+
+Bootstrap modals should ideally be placed at the top level (just before {% endblock %}) or outside of other relative-positioned containers. When a modal is nested deep inside a grid system (col-lg-8, card-body, etc.), the browser sometimes struggles to calculate the "center" of the viewport during the fade-in animation, causing the modal to appear to fly in from a weird angle or shift slightly.
+
+The Fix:
+Move the entire <div class="modal fade" id="reassignModal">...</div> block to the very bottom of your view.html file, just before the {% endblock %} tag.
+
+Summary of Changes
+CSS: Add body.modal-open { padding-right: 0 !important; } to base.html.
+
+HTML: Move the Modal HTML out of the card and to the bottom of the page.
+
+JS: Keep the script where it is, but consider changing show.bs.modal to shown.bs.modal if you want the text to swap after the animation finishes to keep it looking smoother.

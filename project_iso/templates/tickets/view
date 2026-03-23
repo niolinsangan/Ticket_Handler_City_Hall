@@ -3,7 +3,6 @@
 {% block title %}View Travel Request #{{ ticket.id }} - City ENRO Travel Request{% endblock %}
 
 {% block content %}
-
 <div class="row mb-4">
     <div class="col-md-8">
         <h2><i class="bi bi-ticket-detailed"></i> Travel Request #{{ ticket.id }}</h2>
@@ -20,46 +19,8 @@
     </div>
 
 <div class="row">
-        </div>
-        
-        <!-- New Reassign Modal - Top-level fixed -->
-        <div class="modal fade" id="reassignModal" tabindex="-1" aria-labelledby="reassignModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-              <div class="modal-header bg-warning text-dark border-0">
-                <h5 class="modal-title mb-0" id="reassignModalLabel">
-                  <i class="bi bi-arrow-repeat me-2"></i> Reassign Vehicle
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body p-4 text-center">
-                <i class="bi bi-car-front-fill text-primary mb-3" style="font-size: 3rem;"></i>
-                
-                <h6 class="fw-bold text-primary mb-1" id="currentVehicleName" style="min-height: 1.5rem;">&nbsp;</h6>
-                <p class="text-muted small mb-3" id="currentVehicleStatus" style="min-height: 1.25rem;">&nbsp;</p>
-                
-                <div class="alert alert-info py-2 small">
-                  <i class="bi bi-info-circle me-1"></i> Unassigning will free this vehicle for other requests.
-                </div>
-                <p class="mb-0">Are you sure you want to proceed?</p>
-              </div>
-              <div class="modal-footer border-0 bg-light justify-content-center">
-                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                  <i class="bi bi-x-lg me-1"></i>Cancel
-                </button>
-                <form id="unassignForm" method="POST" action="{{ url_for('tickets.unassign_vehicle', ticket_id=ticket.id) }}" style="display:inline;">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-warning px-4">
-                    <i class="bi bi-arrow-repeat me-1"></i>Confirm Unassign
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-9 col-md-8 col-sm-12">
-        <!-- Ticket Details --> 
+    <div class="col-lg-8 col-md-7 col-sm-12">
+        <!-- Ticket Details -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-info-circle"></i> Request Details</h5>
@@ -69,7 +30,7 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="row mb-3">
+                    <div class="col-md-6">
                         <p><strong><i class="bi bi-person"></i> Employee:</strong> {{ ticket.user_name }}</p>
                         <p><strong><i class="bi bi-building"></i> Division:</strong> {{ ticket.division_name }}</p>
                         <p><strong><i class="bi bi-geo-alt"></i> Destination:</strong> {{ ticket.destination }}</p>
@@ -77,7 +38,7 @@
                         <p><strong><i class="bi bi-people"></i> Associates:</strong> {{ ticket.associates }}</p>
                         {% endif %}
                     </div>
-                    <div class="row mb-3">
+                    <div class="col-md-6">
                         <p><strong><i class="bi bi-calendar"></i> Start Date:</strong> {{ ticket.start_date.strftime('%Y-%m-%d') if ticket.start_date else '-' }}</p>
                         <p><strong><i class="bi bi-calendar"></i> End Date:</strong> {{ ticket.end_date.strftime('%Y-%m-%d') if ticket.end_date else '-' }}</p>
                         <p><strong><i class="bi bi-car"></i> Vehicle Needed:</strong> 
@@ -107,7 +68,42 @@
                         
 
 
-
+                        <!-- New Reassign Modal from Scratch -->
+                        <div class="modal fade" id="reassignModal" tabindex="-1" aria-labelledby="reassignModalLabel" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow-lg">
+                              <div class="modal-header bg-warning text-dark border-0">
+                                <h5 class="modal-title mb-0" id="reassignModalLabel">
+                                  <i class="bi bi-arrow-repeat me-2"></i> Reassign Vehicle
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body p-4 text-center">
+                                <div id="modalVehicleInfo" class="mb-4">
+                                  <i class="bi bi-car-front-fill text-primary mb-3" style="font-size: 3rem;"></i>
+                                  <h6 class="fw-bold text-primary mb-1" id="currentVehicleName">-</h6>
+                                  <p class="text-muted small mb-2" id="currentVehicleStatus">Loading...</p>
+                                  <div class="alert alert-info" role="alert">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Unassigning will free this vehicle. You can assign a new one right after.
+                                  </div>
+                                </div>
+                                <p class="text-muted mb-0">Are you sure you want to proceed?</p>
+                              </div>
+                              <div class="modal-footer border-0 bg-light justify-content-center">
+                                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                                  <i class="bi bi-x-lg me-1"></i>Cancel
+                                </button>
+                                <form id="unassignForm" method="POST" action="{{ url_for('tickets.unassign_vehicle', ticket_id=ticket.id) }}" style="display:inline;">
+                                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                  <button type="submit" class="btn btn-warning px-4">
+                                    <i class="bi bi-arrow-repeat me-1"></i>Confirm Unassign
+                                  </button>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
 
                         {% if session.role == 'admin' and ticket.vehicle_needed == 'yes' and not ticket.vehicle_assigned %}
                         <div class="alert alert-info mt-3">
@@ -186,14 +182,9 @@
                 {% endif %}
             </div>
 
-
-
-            <style>
-
-            </style>
         <!-- Approval/Rejection Form (for directors and final authorizers) -->
         {% if session.get('role') == 'final_authorizer' and ticket.status == 'director_approved' %}
-        <div class="card1 mb-4">
+        <div class="card mb-4">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0"><i class="bi bi-gavel"></i> Final Authorization</h5>
             </div>
@@ -277,7 +268,7 @@
         }
     </style>
 
-<div class="col-lg-10 col-md-9 col-sm-12">
+<div class="col-lg-5 col-md-6 col-sm-12">
         <!-- Status Timeline -->
         <div class="card status-timeline">
             <div class="card-header bg-transparent">
@@ -313,61 +304,22 @@
             </div>
         </div> </div>
 </div>
-    </div>
-</div>
-
-<!-- New Reassign Modal from Scratch - Moved to top level for proper positioning -->
-<div class="modal fade" id="reassignModal" tabindex="-1" aria-labelledby="reassignModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-warning text-dark border-0">
-        <h5 class="modal-title mb-0" id="reassignModalLabel">
-          <i class="bi bi-arrow-repeat me-2"></i> Reassign Vehicle
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4 text-center">
-        <i class="bi bi-car-front-fill text-primary mb-3" style="font-size: 3rem;"></i>
-        
-        <h6 class="fw-bold text-primary mb-1" id="currentVehicleName" style="min-height: 1.5rem;">&nbsp;</h6>
-        <p class="text-muted small mb-3" id="currentVehicleStatus" style="min-height: 1.25rem;">&nbsp;</p>
-        
-        <div class="alert alert-info py-2 small">
-          <i class="bi bi-info-circle me-1"></i> Unassigning will free this vehicle for other requests.
-        </div>
-        <p class="mb-0">Are you sure you want to proceed?</p>
-      </div>
-      <div class="modal-footer border-0 bg-light justify-content-center">
-        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-          <i class="bi bi-x-lg me-1"></i>Cancel
-        </button>
-        <form id="unassignForm" method="POST" action="{{ url_for('tickets.unassign_vehicle', ticket_id=ticket.id) }}" style="display:inline;">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn btn-warning px-4">
-            <i class="bi bi-arrow-repeat me-1"></i>Confirm Unassign
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Dynamic Reassign Modal JS -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const reassignModal = document.getElementById('reassignModal');
-    if (reassignModal) {
-        // Changed from 'show' to 'shown' to prevent shifting during animation
-        reassignModal.addEventListener('shown.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const vehicleName = button.getAttribute('data-vehicle-name') || 'Unknown Vehicle';
-            const vehicleStatus = button.getAttribute('data-vehicle-status') || 'assigned';
-            
-            document.getElementById('currentVehicleName').textContent = vehicleName;
-            document.getElementById('currentVehicleStatus').textContent = `Status: ${vehicleStatus}`;
+        <!-- Dynamic Reassign Modal JS -->
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const reassignModal = document.getElementById('reassignModal');
+            if (reassignModal) {
+                reassignModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const vehicleName = button.getAttribute('data-vehicle-name') || 'Unknown Vehicle';
+                    const vehicleStatus = button.getAttribute('data-vehicle-status') || 'assigned';
+                    
+                    document.getElementById('currentVehicleName').textContent = vehicleName;
+                    document.getElementById('currentVehicleStatus').textContent = `Status: ${vehicleStatus}`;
+                });
+            }
         });
-    }
-});
-</script>
-
+        </script>
+    </div>
+</div>
 {% endblock %}

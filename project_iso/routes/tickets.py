@@ -22,29 +22,26 @@ def require_role(roles):
     return session.get('role') in roles
 
 
+def get_vehicle_id_by_name(vehicle_name):
+    """Get vehicle ID by name"""
+    from db import execute_query
+    result = execute_query(
+        "SELECT id FROM vehicles WHERE name = ?" if get_db_type() == 'sqlite' else "SELECT id FROM vehicles WHERE name = %s",
+        params=(vehicle_name,) if get_db_type() == 'sqlite' else (vehicle_name,),
+        fetch_one=True
+    )
+    return result['id'] if result else None
+
+
 def get_available_vehicles():
     """Get list of available vehicles for assignment"""
-    db_type = get_db_type()
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        if db_type == 'sqlite':
-            cursor.execute("SELECT id, name FROM vehicles WHERE status = 'available' ORDER BY name")
-        else:
-            cursor.execute("SELECT id, name FROM vehicles WHERE status = 'available' ORDER BY name")
-        
-        if db_type == 'sqlite':
-            rows = cursor.fetchall()
-            vehicles = [dict_from_row(row) for row in rows]
-        else:
-            vehicles = cursor.fetchall()
-        
-        conn.close()
-        return vehicles
-    except Exception as e:
-        print(f"Error getting vehicles: {e}")
-        return []
+    from db import execute_query
+    vehicles = execute_query(
+        "SELECT id, name FROM vehicles WHERE status = 'available' ORDER BY name",
+        fetch_all=True
+    )
+    return vehicles or []
+
 
 
 @tickets_bp.route('/vehicles', methods=['GET', 'POST'])
@@ -715,46 +712,99 @@ def reject(ticket_id):
     return redirect(url_for('tickets.view', ticket_id=ticket_id))
 
 
+@tickets_bp.route('/<int:ticket_id>/unassign_vehicle', methods=['POST'])
+def unassign_vehicle(ticket_id):
+    """Unassign vehicle from ticket (admin only) - step 2/3 of reassign"""
+    if not require_login() or session.get('role') != 'admin':
+        flash('Access denied', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    from db import execute_query, get_db_connection
+    db_type = get_db_type()
+    
+    # Get current assignment
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if db_type == 'sqlite':
+        cursor.execute("SELECT vehicle_assigned FROM tickets WHERE id = ?", (ticket_id,))
+    else:
+        cursor.execute("SELECT vehicle_assigned FROM tickets WHERE id = %s", (ticket_id,))
+    
+    current_vehicle = cursor.fetchone()
+    current_vehicle_name = current_vehicle['vehicle_assigned'] if current_vehicle and current_vehicle['vehicle_assigned'] else None
+    conn.close()
+    
+    from db import execute_query
+    
+    if current_vehicle_name:
+        # Free old vehicle
+        vehicle_id = get_vehicle_id_by_name(current_vehicle_name)
+        if vehicle_id:
+            execute_query(
+                "UPDATE vehicles SET status = 'available' WHERE id = ?" if db_type == 'sqlite' else "UPDATE vehicles SET status = 'available' WHERE id = %s",
+                params=(vehicle_id,) if db_type == 'sqlite' else (vehicle_id,),
+                commit=True
+            )
+    
+    # Clear ticket assignment
+    execute_query(
+        "UPDATE tickets SET vehicle_assigned = NULL WHERE id = ?" if db_type == 'sqlite' else "UPDATE tickets SET vehicle_assigned = NULL WHERE id = %s",
+        params=(ticket_id,) if db_type == 'sqlite' else (ticket_id,),
+        commit=True
+    )
+    
+    flash('Vehicle unassigned successfully. You can assign a new one immediately.', 'success')
+    return redirect(url_for('tickets.view', ticket_id=ticket_id))
+
+
 @tickets_bp.route('/<int:ticket_id>/assign_vehicle', methods=['POST'])
 def assign_vehicle(ticket_id):
-    """Assign vehicle to approved ticket (admin only)"""
+    """Assign vehicle to approved ticket (admin only) - step 4 of reassign"""
     if not require_login() or session.get('role') != 'admin':
         flash('Access denied', 'danger')
         return redirect(url_for('main.dashboard'))
     
     vehicle_assigned = request.form.get('vehicle_assigned', '').strip()
-    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
+    db_type = get_db_type()
     
     if not vehicle_assigned:
         flash('Vehicle selection is required', 'danger')
         return redirect(url_for('tickets.view', ticket_id=ticket_id))
     
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        if db_type == 'sqlite':
-            cursor.execute("UPDATE tickets SET vehicle_assigned = ? WHERE id = ? AND status = 'approved'", (vehicle_assigned, ticket_id))
-            rows_affected = cursor.rowcount
-        else:
-            cursor.execute("UPDATE tickets SET vehicle_assigned = %s WHERE id = %s AND status = 'approved'", (vehicle_assigned, ticket_id))
-            rows_affected = cursor.rowcount
-        
-        conn.commit()
-        
-        if rows_affected > 0:
-            flash(f'Vehicle {vehicle_assigned} assigned to ticket #{ticket_id}', 'success')
-        else:
-            flash('Ticket not found or not approved', 'danger')
-            
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        flash(f'Error assigning vehicle: {str(e)}', 'danger')
-    finally:
-        if conn:
-            conn.close()
+    # Validate vehicle exists and available
+    vehicle_id = get_vehicle_id_by_name(vehicle_assigned)
+    if not vehicle_id:
+        flash(f'Vehicle {vehicle_assigned} not found', 'danger')
+        return redirect(url_for('tickets.view', ticket_id=ticket_id))
     
+    # Check ticket approved and not already assigned
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if db_type == 'sqlite':
+        cursor.execute("SELECT vehicle_assigned, status FROM tickets WHERE id = ?", (ticket_id,))
+        ticket_row = dict_from_row(cursor.fetchone())
+    else:
+        cursor.execute("SELECT vehicle_assigned, status FROM tickets WHERE id = %s", (ticket_id,))
+        ticket_row = cursor.fetchone()
+    conn.close()
+    ticket = ticket_row
+    if not ticket or ticket['status'] != 'approved' or ticket['vehicle_assigned']:
+        flash('Ticket must be approved and unassigned', 'danger')
+        return redirect(url_for('tickets.view', ticket_id=ticket_id))
+    
+    # Assign to ticket + update vehicle status
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if db_type == 'sqlite':
+        cursor.execute("UPDATE tickets SET vehicle_assigned = ? WHERE id = ?", (vehicle_assigned, ticket_id))
+        cursor.execute("UPDATE vehicles SET status = 'assigned' WHERE id = ?", (vehicle_id,))
+    else:
+        cursor.execute("UPDATE tickets SET vehicle_assigned = %s WHERE id = %s", (vehicle_assigned, ticket_id))
+        cursor.execute("UPDATE vehicles SET status = 'assigned' WHERE id = %s", (vehicle_id,))
+    conn.commit()
+    conn.close()
+    
+    flash(f'Vehicle {vehicle_assigned} assigned to ticket #{ticket_id}', 'success')
     return redirect(url_for('tickets.view', ticket_id=ticket_id))
+
 
