@@ -17,3 +17,22 @@
 **Test URLs:** 
 - http://127.0.0.1:5000/tickets/ (all_tickets or my_tickets)
 - http://127.0.0.1:5000/tickets/<id> (view.html)
+
+## CENTER TRAVEL REQUEST TITLE AND CARD
+**Status: Planning**
+
+1. [ ] Append centering plan to TODO.md ✅
+2. [x] Update tickets/view.html: Integrate row justify-content-center col mb-6 snippet, wrap main col-lg-9 card in col-lg-8 mx-auto ✅
+3. [x] Update tickets/create.html: Title col-12 → col-lg-8 mx-auto text-center; main col-md-8 → col-lg-8 mx-auto ✅
+4. [x] Update tickets/edit.html: Same as create.html ✅
+5. [x] Test pages: /tickets/create, /tickets/ID, /tickets/edit/ID ✅
+
+**Status: Complete**
+
+## MOVE TRAVEL REQUEST NUMBER TO CARD BODY
+**Status: Complete**
+
+1. [x] view.html/edit.html: Move #{{ ticket.id }} from header to prominent position in card-body (h4 fw-bold with border) ✅
+2. [x] Headers restored to "Request Details"/"Travel Details" ✅
+3. [x] Test verified (app running, /tickets/8 visited) ✅
+

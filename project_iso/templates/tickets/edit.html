@@ -3,19 +3,21 @@
 {% block title %}Edit Travel Request #{{ ticket.id }} - City ENRO Travel Request{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
+<div class="container mx-auto px-4 px-lg-5">
+<div class="row justify-content-center mb-4">
+    <div class="col-lg-7 mx-auto text-center">
         <h2><i class="bi bi-pencil"></i> Edit Travel Request #{{ ticket.id }}</h2>
         <p class="text-muted">Update your travel request details</p>
     </div>
 
-<div class="row">
-    <div class="col-md-8">
+<div class="row justify-content-center">
+    <div class="col-lg-7 mx-auto">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+<div class="card-header bg-primary text-white">
                 <h5 class="mb-0"><i class="bi bi-car-front"></i> Travel Details</h5>
             </div>
             <div class="card-body">
+<p class="h4 text-white mb-3 border-bottom pb-2"><strong>Travel Request No.</strong> {{ ticket.id }}</p>
                 <form method="POST" action="{{ url_for('tickets.edit', ticket_id=ticket.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     
@@ -77,7 +79,7 @@
         </div>
     </div>
     
-    <div class="col-md-4">
+    <div class="col-lg-4 ms-auto">
         <div class="card">
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Note</h5>
@@ -87,6 +89,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 {% endblock %}
 
