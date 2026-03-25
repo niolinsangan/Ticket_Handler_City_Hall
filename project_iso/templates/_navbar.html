@@ -52,6 +52,11 @@
                 </li>
                 {% if session.get('role') == 'admin' %}
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.admin_users') }}">
+                        <i class="bi bi-people"></i> Manage Users
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('tickets.vehicles') }}">
                         <i class="bi bi-car-front"></i> Manage Vehicles
                     </a>
@@ -66,6 +71,10 @@
                         <span class="role-badge role-{{ session.role }}">{{ session.role }}</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ url_for('main.account_settings') }}">
+                            <i class="bi bi-gear"></i> Settings
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
                             <i class="bi bi-box-arrow-right"></i> Logout
                         </a></li>

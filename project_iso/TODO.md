@@ -36,3 +36,54 @@
 2. [x] Headers restored to "Request Details"/"Travel Details" ✅
 3. [x] Test verified (app running, /tickets/8 visited) ✅
 
+## ADMIN USER MANAGEMENT & PASSWORD CHANGE SYSTEM
+**Status: Complete** ✅
+
+**High-Level Goal:** 
+- Remove public self-registration 
+- Admin-only user creation (employee accounts)
+- Self-service password change for all users
+- Enhance vehicle status (already partially exists)
+- Add status column in tickets/vehicles views
+
+**Files to Edit/Create:**
+| Category | Files |
+|----------|-------|
+| Remove Register | templates/auth/login.html, templates/auth/register.html, routes/auth.py |
+| Admin Users | new templates/admin/users.html, routes/main.py or new admin.py, _navbar.html (admin link) |
+| Password Change | new templates/account/settings.html, routes/auth.py or main.py, _navbar.html |
+| Vehicles | templates/tickets/vehicles.html (status edit OK), tickets.py logic |
+| Tickets Status | templates/tickets/all_tickets.html, my_tickets.html (add vehicle_status <td>) |
+
+**Detailed Steps:**
+1. [x] **Remove Public Register** 
+   - templates/auth/login.html: Remove 'Register as Employee' link → 'Contact admin' ✅
+   - templates/auth/register.html: Replace form → static 'Admin creates accounts' ✅
+   - routes/auth.py: /register → flash('Admin-only') + redirect login ✅
+
+2. [x] **Admin Create User** (role=employee, temp pw 'change123', force change on login)
+   - Create templates/admin/users.html (table list + add form: username, full_name, division_id) ✅
+   - Add route main.admin_users() (admin-only) ✅
+   - _navbar.html: Admin nav link 'Manage Users' ✅
+
+3. [x] **Account Settings** (password change, all roles)
+   - Create templates/account/settings.html (old/new/confirm pw form) ✅
+   - Add route main.account_settings() ✅
+   - _navbar.html: User dropdown 'Settings' ✅
+
+4. [x] **Vehicle Status** (enhance)
+   - templates/tickets/vehicles.html: Already has status column/edit buttons ✅
+   - Ensure ticket views show vehicle_status if assigned (queries updated) ✅
+
+5. [x] **Tickets Status Column**
+   - all_tickets.html, my_tickets.html: Add <th>Vehicle Status</th> + <td>{{ ticket.vehicle_status|title or '-' }}</td> ✅
+
+**Dependencies:** No DB schema change (users table exists). Test roles: admin creates employee → employee changes pw.
+
+**Test Plan:**
+- Admin login → Manage Users → create employee (temp pw)
+- Employee login (temp) → force change pw → settings works
+- Vehicles page: status toggle
+- Tables: vehicle_status shows
+
+**Expected Completion:** 15-20 file changes across templates/routes/navbar.

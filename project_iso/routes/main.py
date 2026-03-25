@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 import sqlite3
 import pymysql
 from datetime import datetime
@@ -206,4 +206,157 @@ def divisions():
         divisions = []
     
     return render_template('main/divisions.html', divisions=divisions)
+
+@main_bp.route('/account/settings', methods=['GET', 'POST'])
+def account_settings():
+    """Password change for logged in users"""
+    if 'user_id' not in session:
+        flash('Login required', 'danger')
+        return redirect(url_for('auth.login'))
+    
+    from flask_bcrypt import Bcrypt
+    bcrypt = Bcrypt()
+    
+    if request.method == 'POST':
+        current_pw = request.form.get('current_password')
+        new_pw = request.form.get('new_password')
+        confirm_pw = request.form.get('confirm_password')
+        
+        if not current_pw or not new_pw or not confirm_pw:
+            flash('All fields required', 'danger')
+            return render_template('account/settings.html')
+        
+        if new_pw != confirm_pw:
+            flash('New passwords do not match', 'danger')
+            return render_template('account/settings.html')
+        
+        if len(new_pw) < 6:
+            flash('New password too short', 'danger')
+            return render_template('account/settings.html')
+        
+        db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
+        
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            if db_type == 'sqlite':
+                cursor.execute("SELECT password FROM users WHERE id = ?", (session['user_id'],))
+                row = cursor.fetchone()
+                user_hash = dict_from_row(row)['password'] if row else None
+            else:
+                cursor.execute("SELECT password FROM users WHERE id = %s", (session['user_id'],))
+                user = cursor.fetchone()
+                user_hash = user['password'] if user else None
+            
+            if bcrypt.check_password_hash(user_hash, current_pw):
+                new_hash = bcrypt.generate_password_hash(new_pw).decode('utf-8')
+                
+                if db_type == 'sqlite':
+                    cursor.execute("UPDATE users SET password = ? WHERE id = ?", (new_hash, session['user_id']))
+                else:
+                    cursor.execute("UPDATE users SET password = %s WHERE id = %s", (new_hash, session['user_id']))
+                
+                conn.commit()
+                conn.close()
+                flash('Password updated successfully', 'success')
+                return redirect(url_for('main.dashboard'))
+            else:
+                conn.close()
+                flash('Current password incorrect', 'danger')
+        except Exception as e:
+            flash(f'Error: {str(e)}', 'danger')
+    
+    return render_template('account/settings.html')
+
+@main_bp.route('/admin/users', methods=['GET', 'POST'])
+def admin_users():
+    """Admin manage users page"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash('Admin access required', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    from flask_bcrypt import Bcrypt
+    bcrypt = Bcrypt()
+    
+    db_type = getattr(Config, 'DATABASE_TYPE', 'sqlite')
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'create':
+            username = request.form.get('username', '').strip()
+            full_name = request.form.get('full_name', '').strip()
+            division_id = request.form.get('division_id')
+            
+            if username and full_name and division_id:
+                temp_password = 'change123'
+                hashed = bcrypt.generate_password_hash(temp_password).decode('utf-8')
+                
+                try:
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    
+                    if db_type == 'sqlite':
+                        cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+                    else:
+                        cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
+                    
+                    if not cursor.fetchone():
+                        if db_type == 'sqlite':
+                            cursor.execute(
+                                "INSERT INTO users (username, password, role, division_id, full_name) VALUES (?, ?, 'employee', ?, ?)",
+                                (username, hashed, division_id, full_name)
+                            )
+                        else:
+                            cursor.execute(
+                                "INSERT INTO users (username, password, role, division_id, full_name) VALUES (%s, %s, 'employee', %s, %s)",
+                                (username, hashed, division_id, full_name)
+                            )
+                        conn.commit()
+                        flash(f'User {username} created successfully! Temp pw: change123', 'success')
+                    else:
+                        flash('Username exists', 'danger')
+                    
+                    conn.close()
+                except Exception as e:
+                    flash(f'Error: {str(e)}', 'danger')
+    
+    # Get divisions and users
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if db_type == 'sqlite':
+            cursor.execute("""
+                SELECT u.*, d.name as division_name 
+                FROM users u 
+                LEFT JOIN divisions d ON u.division_id = d.id 
+                WHERE u.role = 'employee'
+                ORDER BY u.created_at DESC
+            """)
+            rows = cursor.fetchall()
+            users = [dict_from_row(row) for row in rows]
+            
+            cursor.execute("SELECT * FROM divisions ORDER BY name")
+            rows = cursor.fetchall()
+            divisions = [dict_from_row(row) for row in rows]
+        else:
+            cursor.execute("""
+                SELECT u.*, d.name as division_name 
+                FROM users u 
+                LEFT JOIN divisions d ON u.division_id = d.id 
+                WHERE u.role = 'employee'
+                ORDER BY u.created_at DESC
+            """)
+            users = cursor.fetchall()
+            
+            cursor.execute("SELECT * FROM divisions ORDER BY name")
+            divisions = cursor.fetchall()
+        
+        conn.close()
+    except:
+        users = []
+        divisions = []
+    
+    return render_template('admin/users.html', users=users, divisions=divisions)
 

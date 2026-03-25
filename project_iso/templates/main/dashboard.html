@@ -3,7 +3,7 @@
 {% block title %}Dashboard - City ENRO Travel Request{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 px-lg-5">
+
 <div class="row mb-4">
     <div class="col-12">
         <h2>Welcome, {{ user_name }}!</h2>
@@ -107,14 +107,14 @@
                                 {% endif %}
                                 <th>Destination</th>
                                 <th>Start Date</th>
-<th><i class="bi bi-calendar-check"></i> End Date</th>
-<th><i class="bi bi-tag"></i> Status</th>
+                                <th><i class="bi bi-calendar-check"></i> End Date</th>
+                                <th><i class="bi bi-tag"></i> Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for ticket in recent_tickets %}
                             <tr class="ticket-row" data-ticket-id="{{ ticket.id }}">
-                                <td>#{{ ticket.id }}</td>
+                                <td>{{ ticket.id }}</td>
                                 {% if user_role != 'employee' %}
                                 <td>{{ ticket.user_name }}</td>
                                 <td>{{ ticket.division_name }}</td>
@@ -122,12 +122,12 @@
                                 <td>{{ ticket.destination }}</td>
                                 <td>{{ ticket.start_date.strftime('%Y-%m-%d') if ticket.start_date else '-' }}</td>
                                 <td>{{ ticket.end_date.strftime('%Y-%m-%d') if ticket.end_date else '-' }}</td>
-<td>
-    <span class="status-badge status-{{ ticket.status }} px-2 py-1">
-        <i class="bi bi-circle-fill me-1" style="font-size: 0.6em;"></i>
-        {{ ticket.status|replace('_', ' ')|title }}
-    </span>
-</td>
+                                <td>
+                                    <span class="status-badge status-{{ ticket.status }} px-2 py-1">
+                                        <i class="bi bi-circle-fill me-1" style="font-size: 0.6em;"></i>
+                                        {{ ticket.status|replace('_', ' ')|title }}
+                                    </span>
+                                </td>
                                 <td>
                                     <i class="bi bi-chevron-right text-muted"></i>
                                 </td>
@@ -150,7 +150,6 @@
             </div>
         </div>
     </div>
-</div>
 </div>
 {% endblock %}
 

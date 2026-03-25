@@ -10,54 +10,13 @@
                 <h4 class="mb-0"><i class="bi bi-person-plus"></i> Employee Registration</h4>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('auth.register') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="username" name="username" required>
-                            <div class="form-text">Minimum 3 characters</div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="full_name" class="form-label">Full Name</label>
-                            <input type="text" class="form-control" id="full_name" name="full_name" required>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                            <div class="form-text">Minimum 6 characters</div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="confirm_password" class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="division_id" class="form-label">Select Division</label>
-                        <select class="form-select" id="division_id" name="division_id" required>
-                            <option value="">-- Select Your Division --</option>
-                            {% for division in divisions %}
-                            <option value="{{ division.id }}">{{ division.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-check-circle"></i> Register
-                        </button>
-                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Back to Login
+<div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> Account Creation</h5>
+                        <p class="mb-0">Contact your admin officer to create your account. Self-registration is disabled.</p>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-primary mt-2">
+                            <i class="bi bi-box-arrow-in-right"></i> Go to Login
                         </a>
                     </div>
-                </form>
             </div>
         </div>
     </div>
