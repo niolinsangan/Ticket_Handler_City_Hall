@@ -20,7 +20,7 @@
         body {
             background-image: url('/static/img/nd%20CREDIT%20John%20Christian%20Yayen_CNCH%20%2B%20Honday%20Bay-blue%20filter.jpg');
             background-size: cover;
-            background-position: center;
+            background-position: flex;
             background-repeat: no-repeat;
             background-attachment: fixed;
             min-height: 100vh;
@@ -28,6 +28,8 @@
             flex-direction: column;
             font-size: clamp(0.875rem, 1rem, 1.125rem);
             line-height: 1.6;
+            margin: 0;
+            padding: 0;
         }
         
         .main-wrapper {
@@ -36,10 +38,10 @@
             flex-direction: column;
         }
         
-        .navbar {
+.navbar {
             background-color: var(--primary-color) !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 0.9rem 0.9rem;
+            padding: 0.9rem 0;
         }
         
         .navbar-brand {
@@ -261,7 +263,7 @@
             /* Hide non-essential table columns on xs */
             .table th:nth-child(4), .table td:nth-child(4), /* Associates */
             .table th:nth-child(5), .table td:nth-child(5) { display: none; }
-        }
+        
         
         @media (max-width: 768px) {
             .container { padding-left: 1rem; padding-right: 1rem; }

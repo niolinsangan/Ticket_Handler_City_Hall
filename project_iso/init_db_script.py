@@ -30,7 +30,7 @@ def init_db():
         # Create database
         print(f"Creating database '{MYSQL_DATABASE}'...")
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {MYSQL_DATABASE}")
-        conn.close(
+        conn.close()
         
         # Now connect to the database
         print(f"Connecting to database '{MYSQL_DATABASE}'...")
@@ -111,7 +111,7 @@ def init_db():
             divisions = [
                'Forestry Management Services Division', 
                'Wildlife Management Services Division', 
-               'Protected Area Management Division', 
+               'Protected Area Management Services Division', 
                'Mines and Geosciences Management Service Division', 
                'Land Management Services Division',
                'Environmental Management Services Division', 
