@@ -1,0 +1,365 @@
+:root {
+            --primary-color: #274e13;
+            --accent-color: #216440;
+            --success-color: #38a169;
+            --warning-color: #d69e2e;
+            --danger-color: #e53e3e;
+            --light-bg: #3f6342;
+        }
+        
+        body {
+            background-image: url('/static/img/nd%20CREDIT%20John%20Christian%20Yayen_CNCH%20%2B%20Honday%20Bay-blue%20filter.jpg');
+            background-size: cover;
+            background-position: flex;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-size: clamp(0.875rem, 1rem, 1.125rem);
+            line-height: 1.6;
+            margin: 0 5px;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            background-color: var(--primary-color) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0.9rem 1.5rem;
+            margin: 0 -5px;
+            width: calc(100% + 10px);
+            max-width: none;
+            box-sizing: border-box;
+            position:absolute;
+            box-sizing: border-box;
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+            color: #fff !important;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+        }
+        
+        .nav-link:hover {
+            color: #fff !important;
+            background-color: var(--secondary-color);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        
+        .btn-primary {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+           
+        .stat-card {
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .stat-card.pending { border-left-color: var(--warning-color); }
+        .stat-card.approved { border-left-color: var(--success-color); }
+        .stat-card.rejected { border-left-color: var(--danger-color); }
+        .stat-card.director_approved { border-left-color: #805ad5; }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-director_approved { background-color: #e9d8fd; color: #553c9a; }
+        .status-approved { background-color: #c6f6d5; color: #22543d; }
+        .status-rejected { background-color: #fed7d7; color: #822727; }
+        
+        .table-card {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        /* Status timeline responsive scaling */
+        .status-timeline {
+            --timeline-dot-size: clamp(24px, 6vw, 36px);
+            --timeline-line-height: clamp(20px, 5vw, 32px);
+        }
+        .status-timeline .rounded-circle {
+            width: var(--timeline-dot-size);
+            height: var(--timeline-dot-size);
+            padding: calc(var(--timeline-dot-size) * 0.25);
+            font-size: calc(var(--timeline-dot-size) * 0.4);
+            line-height: 1;
+        }
+        .status-timeline .me-3 {
+            margin-right: clamp(0.75rem, 4vw, 1.25rem);
+        }
+        
+        .status-timeline.border-dashed {
+            border-style: dashed !important;
+            border-width: 2px;
+            border-color: var(--accent-color) !important;
+        }
+        
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            position: relative;
+            left: 0;
+            bottom: 0;
+            width: 100vw;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+            text-align: center;
+            padding: clamp(15px, 3vw, 25px) clamp(1rem, 5vw, 3rem);
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        
+        
+        .login-container {
+            margin-top: 90px;
+            min-height: 30vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+            max-width: 450px;
+            width: 100%;
+        }
+        
+        .login-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .login-body {
+            padding: 40px;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .role-employee { background-color: #bee3f8; color: #2b6cb0; }
+        .role-director { background-color: #e9d8fd; color: #6b46c1; }
+        .role-final_authorizer { background-color: #c6f6d5; color: #22543d; }
+        .role-admin { background-color: #fed7d7; color: #822727; }
+        
+        /* Toast Styles - Fixed Position, No Movement */
+        .toast-container {
+            z-index: 1099;
+        }
+/* Absolute hover-proof */
+.toast-container {
+    pointer-events: none !important;
+}
+.toast-container .btn-close {
+    position: absolute !important;
+    right: 12px !important;
+    top: 12px !important;
+    z-index: 10;
+}
+.toast {
+    position: fixed !important;
+    left: auto !important;
+    right: 20px !important;
+    bottom: 20px !important;
+    transform: none !important;
+    transition: none !important;
+    min-width: 320px !important;
+    max-width: 400px !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
+}
+
+        
+        /* Auto-scaling Typography & Spacing */
+        h1 { font-size: clamp(1.5rem, 4vw, 2.5rem); }
+        h2 { font-size: clamp(1.25rem, 3.5vw, 2rem); }
+        h3 { font-size: clamp(1.1rem, 3vw, 1.75rem); }
+        h4, h5, h6 { font-size: clamp(1rem, 2.5vw, 1.25rem); }
+        
+        .wide-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding-left: clamp(1rem, 5vw, 3rem);
+            padding-right: clamp(1rem, 5vw, 3rem);
+            overflow-x: auto;
+        }
+        .container-fluid {
+            padding-left: 0;
+            padding-right: 0;
+            overflow-x: hidden;
+        }
+        .form-select.assign-vehicle { height: calc(47px - 2px); }
+        .input-group.assign-vehicle { height: calc(37px - 2px); }
+        .btn-sm { padding: 0.125rem 0.5rem; font-size: 0.75rem; }
+        
+        .btn { font-size: clamp(0.875rem, 2.5vw, 1rem); min-height: clamp(37px, 10vw, 43px); }
+        .table { font-size: clamp(0.75rem, 2vw, 0.875rem); }
+        
+.status-badge { 
+  font-size: clamp(0.75rem, 2.5vw, 0.875rem); 
+  padding: clamp(0.4rem, 2vw, 0.6rem) clamp(0.75rem, 4vw, 1rem) !important; 
+  font-weight: 600 !important;
+  min-height: 1.5em;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+        
+        /* Mobile Optimizations */
+            .card { 
+                margin-bottom: 1rem; 
+                border-radius: 0.75rem; 
+            }
+            .login-header { 
+                padding: 1.5rem; 
+            }
+            .login-body { 
+                padding: 1.5rem; 
+            }
+            .btn { 
+                min-height: 44px; 
+                font-size: 16px; 
+            } /* Touch-friendly */
+            .status-badge { 
+                font-size: 0.75rem; 
+                padding: 0.375rem 0.75rem; 
+            }
+            .navbar-brand { 
+                font-size: 1rem; 
+            }
+            table { 
+                font-size: 0.875rem; 
+            }
+            .table th, .table td { 
+                padding: 0.75rem 0.5rem; 
+                white-space: nowrap;
+            }
+            .table th:nth-child(4), .table td:nth-child(4) { min-width: 120px; } /* Associates/Destination */
+            /* Hide non-essential table columns on xs */
+            .table th:nth-child(4), .table td:nth-child(4), /* Associates */
+            .table th:nth-child(5), .table td:nth-child(5) { display: none; }
+        
+        
+        @media (max-width: 768px) {
+            .container { padding-left: 1rem; padding-right: 1rem; }
+            .row > [class*="col-"] { margin-bottom: 1rem; }
+            .status-badge { padding: 0.25rem 0.5rem; }
+        }
+        
+        /* Landscape mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .login-card { max-height: 90vh; overflow-y: auto; }
+        }
+        
+        /* Clickable table rows */
+        .ticket-row {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        /* No horizontal scroll, keep vertical */
+        * {
+            box-sizing: border-box;
+        }
+        html {
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+        body {
+            overflow-x: hidden;
+        }
+        body.modal-open {
+            padding-right: 0 !important;
+        }
+        .ticket-row:hover {
+            background-color: rgba(0,123,255,.075);
+        }
+        .ticket-row td {
+            vertical-align: middle;
+        }
+        @media (hover: none) {
+            .ticket-row:active {
+                background-color: rgba(0,123,255,.15);
+            }
+        }
+
+        /* PWA Install Button */
+        .install-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+        .install-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+        .install-btn:active {
+            transform: scale(0.98);
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255,255,255,0); }
+            100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+        }
+
+        /* Navbar role badges (moved from _navbar.html) */
+        .navbar .role-badge {
+            font-size: 0.75rem;
+            padding: 0.25em 0.5em;
+            border-radius: 0.25rem;
+            color: #fff;
+            margin-left: 0.5em;
+        }
+        .navbar .role-admin { background-color: #a7f2c1; }
+        .navbar .role-approver { background-color: #ffc107; }
+        .navbar .role-employee { background-color: #28a745; }
+        .navbar .role-director { background-color: #1f5027; }
+        .navbar .role-final_authorizer { background-color: #0c2c0b; }
