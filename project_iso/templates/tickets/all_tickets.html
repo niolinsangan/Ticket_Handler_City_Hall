@@ -11,21 +11,28 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-body">
-                <form method="GET" action="{{ url_for('tickets.all_tickets') }}">
                     <label for="status" class="form-label">Filter by Status</label>
                     <div class="input-group">
-                        <select class="form-select" id="status" name="status">
+                        <select class="form-select" id="status" name="status" onchange="filterByStatus(this.value)">
                             <option value="">All Statuses</option>
                             <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
                             <option value="director_approved" {% if status_filter == 'director_approved' %}selected{% endif %}>Director Approved</option>
                             <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Fully Approved</option>
                             <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
                         </select>
-                        <button class="btn btn-primary" type="submit">
-                            <i class="bi bi-filter"></i> Filter
-                        </button>
                     </div>
-                </form>
+                    <small class="form-text text-muted">Select status to auto-filter table.</small>
+                    <script>
+                        function filterByStatus(status) {
+                            const url = new URL(window.location);
+                            if (status) {
+                                url.searchParams.set('status', status);
+                            } else {
+                                url.searchParams.delete('status');
+                            }
+                            window.location = url;
+                        }
+                    </script>
             </div>
         </div>
     </div>
