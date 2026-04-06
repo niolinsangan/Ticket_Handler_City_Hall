@@ -361,7 +361,8 @@ def init_mysql_db(app):
         print(f"MySQL database initialization error: {e}")
 
 
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app('development')
     app.run(debug=True, host='0.0.0.0', port=5000)
 
