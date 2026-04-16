@@ -20,13 +20,16 @@
             line-height: 1.6;
             margin: 0 5px;
             padding: 0;
-            overflow-x: hidden;
+            overflow: visible !important;
         }
         
         .main-wrapper {
             flex: 1;
             display: flex;
             flex-direction: column;
+            overflow: visible !important;
+            position: relative;
+            z-index: 1;
         }
         
         .navbar {
@@ -36,9 +39,8 @@
             margin: 0 -5px;
             width: calc(100% + 10px);
             max-width: none;
-            box-sizing: border-box;
-            position:absolute;
-            box-sizing: border-box;
+            position: relative;
+            overflow: visible !important;
         }
         
         .navbar-brand {
@@ -299,6 +301,56 @@
         .ticket-row {
             cursor: pointer;
             transition: background-color 0.2s;
+        }
+
+        /* Navbar dropdown fixes - Full overflow */
+        .navbar-nav .dropdown-menu {
+            position: fixed !important;
+            inset: auto 0  auto calc(100vw - 200px) !important;
+            transform: translateY(10px);
+            z-index: 1060 !important;
+            margin-top: 0;
+            min-width: 200px;
+            max-width: 280px;
+            overflow: visible !important;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.25) !important;
+        }
+        .navbar-nav .dropdown-menu.show {
+            animation: dropdownSlide 0.2s ease-out;
+        }
+        @keyframes dropdownSlide {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(10px); }
+        }
+        #navbarNav {
+            overflow: visible !important;
+        }
+        .navbar-collapse {
+            overflow: visible !important;
+        }
+        @media (min-width: 992px) {
+            .navbar .dropdown:hover .dropdown-menu {
+                display: block;
+            }
+            .navbar .dropdown .dropdown-toggle::after {
+                transition: transform 0.2s ease;
+            }
+            .navbar .dropdown.show .dropdown-toggle::after {
+                transform: rotate(180deg);
+            }
+        }
+        .navbar .dropdown-menu {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            border: none;
+            border-radius: 0.5rem;
+            background-color: #fff;
+            overflow: visible !important;
+        }
+        .dropdown-item {
+            padding: 0.75rem 1.5rem;
+        }
+        .dropdown-item:hover {
+            background-color: rgba(255,255,255,0.1);
         }
 
         /* No horizontal scroll, keep vertical */
