@@ -22,14 +22,17 @@ def create_app(config_name='default'):
     bcrypt.init_app(app)
     csrf.init_app(app)
     
-    # Register blueprints
+# Register blueprints
+    from flask import jsonify
     from routes.main import main_bp
     from routes.auth import auth_bp
     from routes.tickets import tickets_bp
+    from routes.api import api_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(tickets_bp, url_prefix='/tickets')
+    app.register_blueprint(api_bp, url_prefix='/api')
     
     # Create database tables if not exist
     init_db(app)

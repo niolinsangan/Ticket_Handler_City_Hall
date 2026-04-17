@@ -1,8 +1,12 @@
-# TODO: Fix navbar to fully extend right
+# JSON API Implementation Plan
+Current Working Directory: project_iso/
 
-1. [x] Edit base.html: Update .navbar padding to 0.9rem 0 for full right extension
-2. [x] Edit _navbar.html: Fix excessive role-badge padding
-3. [x] Test navbar extension in browser (full right edge, responsive, dropdowns)
-4. [x] Mark complete and attempt_completion
+## Steps:
+- [x] Step 1: Create routes/api.py blueprint with JSON endpoints
+- [x] Step 2: Update app.py to register api_bp blueprint and add necessary imports
+- [ ] Step 3: Test API endpoints with curl
+- [ ] Step 4: Verify HTML routes still work
+- [ ] Complete
 
-All steps completed. Navbar now extends fully to the right edge.
+Progress: Planning complete. Starting implementation.
+
