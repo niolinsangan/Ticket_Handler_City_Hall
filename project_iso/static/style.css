@@ -363,22 +363,56 @@
         .navbar .role-director { background-color: #1f5027; }
         .navbar .role-final_authorizer { background-color: #0c2c0b; }
 
-        /* Final Navbar Dropdown Overflow Fix */
-        #navbarNav .dropdown-menu {
-            z-index: 1070 !important;
-            max-height: none !important;
-        }
-        
-        #navbarNav .dropdown-menu.show {
-            z-index: 1070 !important;
-            transform: none !important;
-        }
-        
-        #navbarNav {
-            overflow: visible !important;
-        }
-        
-        .container-fluid {
-            overflow: visible !important;
-        }
+/* Navbar Dropdown Overflow Fix - Force Outside Navbar */
+.navbar, .navbar-collapse, .container-fluid, body, html {
+    overflow: visible !important;
+}
+.main-wrapper {
+    overflow: visible !important;
+}
+.navbar .dropdown, .navbar .dropdown-menu {
+    overflow: visible !important;
+}
+.navbar .dropdown-menu {
+    position: fixed !important;
+    top: auto !important;
+    left: auto !important;
+    right: 1.5rem !important;
+    transform: translateY(10px) !important;
+    min-width: 240px !important;
+    z-index: 1070 !important;
+    box-shadow: 0 0.75rem 2rem rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 0.75rem;
+    background-color: #ffffff;
+    backdrop-filter: blur(10px);
+    margin: 0 !important;
+    max-height: 400px !important;
+    overflow-y: auto !important;
+}
+.navbar .dropdown-menu.show {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+.navbar .dropdown-toggle::after {
+    margin-left: 0.5rem;
+    border-top-color: rgba(255,255,255,0.9);
+    border-top-width: 0.4em;
+}
+.navbar .dropdown-item {
+    color: #2d3748 !important;
+    padding: 0.75rem 1.25rem !important;
+    border-radius: 0.5rem;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+.navbar .dropdown-item:hover, .navbar .dropdown-item:focus {
+    background-color: rgba(39, 78, 19, 0.1) !important;
+    color: var(--primary-color) !important;
+    transform: translateX(4px);
+}
+.navbar .dropdown-divider {
+    border-color: rgba(0,0,0,0.08);
+}
 
