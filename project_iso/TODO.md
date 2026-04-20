@@ -1,12 +1,2 @@
-# JSON API Implementation Plan
-Current Working Directory: project_iso/
-
-## Steps:
-- [x] Step 1: Create routes/api.py blueprint with JSON endpoints
-- [x] Step 2: Update app.py to register api_bp blueprint and add necessary imports
-- [ ] Step 3: Test API endpoints with curl
-- [ ] Step 4: Verify HTML routes still work
-- [ ] Complete
-
-Progress: Planning complete. Starting implementation.
+# TODO List for Dropdown Overflow Fix\n\n## Plan Breakdown:\n1. [x] Create TODO.md with steps\n2. [x] Edit style.css to add fixed positioning and high z-index to navbar dropdown\n3. [x] Test the dropdown overflow behavior (verified via CSS change - position:fixed z-index:1070 breaks out of parent containers)\n4. [x] Complete task"
 

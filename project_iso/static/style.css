@@ -363,8 +363,22 @@
         .navbar .role-director { background-color: #1f5027; }
         .navbar .role-final_authorizer { background-color: #0c2c0b; }
 
-        /* Navbar Dropdown Fix */
-        .dropdown-menu {
-            z-index: 1060 !important;
+        /* Final Navbar Dropdown Overflow Fix */
+        #navbarNav .dropdown-menu {
+            z-index: 1070 !important;
+            max-height: none !important;
+        }
+        
+        #navbarNav .dropdown-menu.show {
+            z-index: 1070 !important;
+            transform: none !important;
+        }
+        
+        #navbarNav {
+            overflow: visible !important;
+        }
+        
+        .container-fluid {
+            overflow: visible !important;
         }
 
