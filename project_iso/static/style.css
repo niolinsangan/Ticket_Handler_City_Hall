@@ -7,41 +7,38 @@
             --light-bg: #3f6342;
         }
         
-        body {
+body {
             background-image: url('/static/img/nd%20CREDIT%20John%20Christian%20Yayen_CNCH%20%2B%20Honday%20Bay-blue%20filter.jpg');
             background-size: cover;
             background-position: flex;
             background-repeat: no-repeat;
             background-attachment: fixed;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             font-size: clamp(0.875rem, 1rem, 1.125rem);
             line-height: 1.6;
-            margin: 0 5px;
             padding: 0;
             overflow-x: hidden;
         }
         
-        .main-wrapper {
-            flex: 1;
+.main-wrapper {
             display: flex;
             flex-direction: column;
+            padding: 3rem;
+            min-height: calc(100vh - 120px);
+            overflow-x: clip;
+            overflow-y: visible;
+            padding-bottom: 4rem;
         }
         
         .navbar {
             background-color: var(--primary-color) !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 0.9rem 1.5rem;
-            margin: 0;
-            width: 100vw;
-            position: relative;
-            left: 50%;
-            right: 50%;
-            margin-left: -50vw;
-            margin-right: -50vw;
-            z-index: 1050;
-            box-sizing: border-box;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            width: 100%;
+            padding-left: 6rem;  
+            padding-right: 1.5rem;
         }
         
         .navbar-brand {
@@ -127,18 +124,15 @@
             border-width: 2px;
             border-color: var(--accent-color) !important;
         }
-        
-        .footer {
+
+.footer {
             background-color: var(--primary-color);
             color: white;
-            position: relative;
-            width: 100vw;
-            left: 50%;
-            margin-left: -50vw;
+            width: 100%;
             text-align: center;
             padding: clamp(15px, 3vw, 25px) clamp(1rem, 5vw, 3rem);
-            box-sizing: border-box;
-            z-index: 10;
+            position: relative;
+            z-index: 1030;
         }
         
         
@@ -364,11 +358,15 @@
         .navbar .role-final_authorizer { background-color: #0c2c0b; }
 
 /* Navbar Dropdown Overflow Fix - Force Outside Navbar */
-.navbar, .navbar-collapse, .container-fluid, body, html {
+.navbar, .navbar-collapse {
     overflow: visible !important;
 }
-.main-wrapper {
-    overflow: visible !important;
+
+/* Sticky navbar fix — must be outside any overflow:hidden parent */
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 .navbar .dropdown, .navbar .dropdown-menu {
     overflow: visible !important;
@@ -415,4 +413,3 @@
 .navbar .dropdown-divider {
     border-color: rgba(0,0,0,0.08);
 }
-

@@ -1,6 +1,8 @@
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request, session, Response
 from db import execute_query, get_db_type
 import datetime
+import queue
+from broadcast import clients, clients_lock, broadcast_event
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -170,6 +172,28 @@ def api_login():
 @api_bp.errorhandler(404)
 def api_not_found(e):
     return jsonify({'error': 'Endpoint not found'}), 404
+
+@api_bp.route('/stream')
+def stream():
+    """Server-Sent Events endpoint for real-time dashboard refresh."""
+    def event_stream():
+        q = queue.Queue(maxsize=10)
+        with clients_lock:
+            clients.append(q)
+        try:
+            while True:
+                try:
+                    msg = q.get(timeout=30)
+                    yield f"data: {msg}\n\n"
+                except queue.Empty:
+                    yield ":heartbeat\n\n"
+        finally:
+            with clients_lock:
+                if q in clients:
+                    clients.remove(q)
+
+    return Response(event_stream(), mimetype="text/event-stream")
+
 
 @api_bp.errorhandler(405)
 def api_method_not_allowed(e):
