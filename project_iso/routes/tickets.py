@@ -3,6 +3,7 @@ import sqlite3
 import pymysql
 from datetime import datetime
 from config import Config
+from broadcast import broadcast_event
 
 tickets_bp = Blueprint('tickets', __name__)
 from db import get_db_connection, dict_from_row, get_db_type
@@ -331,6 +332,8 @@ def create():
                 """, (session['user_id'], division_id, destination, purpose, associates, start_date, end_date, vehicle_needed))
             
             conn.commit()
+            ticket_id = cursor.lastrowid
+            broadcast_event('ticket_update', {'ticket_id': ticket_id, 'action': 'created'})
             
             flash('Travel request submitted successfully!', 'success')
             return redirect(url_for('tickets.my_tickets'))
@@ -437,6 +440,7 @@ def edit(ticket_id):
                 """, (destination, purpose, associates, start_date, end_date, vehicle_needed, ticket_id))
 
             conn.commit()
+            broadcast_event('ticket_update', {'ticket_id': ticket_id, 'action': 'edited'})
             flash('Travel request updated successfully!', 'success')
             return redirect(url_for('tickets.view', ticket_id=ticket_id))
 
@@ -617,6 +621,7 @@ def approve(ticket_id):
             """, (ticket_id, session['user_id'], level, comments))
         
         conn.commit()
+        broadcast_event('ticket_update', {'ticket_id': ticket_id, 'action': 'approved'})
         
         flash(f'Ticket #{ticket_id} approved successfully!', 'success')
         
@@ -698,6 +703,7 @@ def reject(ticket_id):
             """, (ticket_id, session['user_id'], level, comments))
         
         conn.commit()
+        broadcast_event('ticket_update', {'ticket_id': ticket_id, 'action': 'rejected'})
         
         flash(f'Ticket #{ticket_id} has been rejected', 'warning')
         
@@ -752,6 +758,7 @@ def unassign_vehicle(ticket_id):
         params=(ticket_id,) if db_type == 'sqlite' else (ticket_id,),
         commit=True
     )
+    broadcast_event('ticket_update', {'ticket_id': ticket_id, 'action': 'vehicle_unassigned'})
     
     flash('Vehicle unassigned successfully. You can assign a new one immediately.', 'success')
     return redirect(url_for('tickets.view', ticket_id=ticket_id))
@@ -803,6 +810,7 @@ def assign_vehicle(ticket_id):
         cursor.execute("UPDATE vehicles SET status = 'assigned' WHERE id = %s", (vehicle_id,))
     conn.commit()
     conn.close()
+    broadcast_event('ticket_update', {'ticket_id': ticket_id, 'action': 'vehicle_assigned'})
     
     flash(f'Vehicle {vehicle_assigned} assigned to ticket #{ticket_id}', 'success')
     return redirect(url_for('tickets.view', ticket_id=ticket_id))

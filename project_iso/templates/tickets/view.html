@@ -95,49 +95,47 @@
                         {% endif %} 
                         </p>
                         
-                        {% if session.role == 'admin' and ticket.vehicle_needed == 'yes' %}
-                        {% if ticket.vehicle_assigned %}
-                        <div class="alert alert-info">
-                            <strong>Assigned Vehicle:</strong> {{ ticket.vehicle_name or ticket.vehicle_assigned }} 
-                            {% if ticket.vehicle_status %}
-                            <small>(Status: {{ ticket.vehicle_status }})</small>
-                            {% endif %}
-                            <form method="POST" action="{{ url_for('tickets.unassign_vehicle', ticket_id=ticket.id) }}" class="d-inline ms-3">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#reassignModal" 
-                                    data-ticket-id="{{ ticket.id }}"
-                                    data-vehicle-name="{{ ticket.vehicle_name or ticket.vehicle_assigned }}"
-                                    data-vehicle-status="{{ ticket.vehicle_status or 'assigned' }}">
-                                    <i class="bi bi-arrow-repeat"></i> Reassign
-                                </button>
-                            </form>
-                        
-
-
-
-
-                        {% if session.role == 'admin' and ticket.vehicle_needed == 'yes' and not ticket.vehicle_assigned %}
-                        <div class="alert alert-info mt-3">
-                            No vehicle assigned. <a href="#assignForm" class="alert-link">Assign now</a>
-                        </div>
-                        {% endif %}
-                        {% else %}
-                        <form method="POST" action="{{ url_for('tickets.assign_vehicle', ticket_id=ticket.id) }}" class="mt-3">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <label class="form-label">Assign Vehicle:</label>
-                            <div class="input-group assign-vehicle">
-                                <select class="form-select assign-vehicle" name="vehicle_assigned" required>
-                                    <option value="">Select from available...</option>
-                                    {% for vehicle in available_vehicles %}
-                                    <option value="{{ vehicle.name }}">{{ vehicle.name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-check-lg"></i> Assign
-                                </button>
+                        {% if ticket.vehicle_needed == 'yes' %}
+                            {% if ticket.vehicle_assigned %}
+                            <div class="alert alert-success">
+                                <strong><i class="bi bi-car-front"></i> Assigned Vehicle:</strong> {{ ticket.vehicle_name or ticket.vehicle_assigned }}
+                                {% if ticket.vehicle_status %}
+                                <small class="text-muted">(Status: {{ ticket.vehicle_status }})</small>
+                                {% endif %}
+                                {% if session.role == 'admin' %}
+                                <form method="POST" action="{{ url_for('tickets.unassign_vehicle', ticket_id=ticket.id) }}" class="d-inline ms-3">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#reassignModal" 
+                                        data-ticket-id="{{ ticket.id }}"
+                                        data-vehicle-name="{{ ticket.vehicle_name or ticket.vehicle_assigned }}"
+                                        data-vehicle-status="{{ ticket.vehicle_status or 'assigned' }}">
+                                        <i class="bi bi-arrow-repeat"></i> Reassign
+                                    </button>
+                                </form>
+                                {% endif %}
                             </div>
-                        </form>
-                        {% endif %}
+                            {% else %}
+                            <div class="alert alert-info">
+                                <i class="bi bi-car"></i> Vehicle requested but not yet assigned.
+                            </div>
+                            {% if session.role == 'admin' %}
+                            <form method="POST" action="{{ url_for('tickets.assign_vehicle', ticket_id=ticket.id) }}" class="mt-3">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <label class="form-label">Assign Vehicle:</label>
+                                <div class="input-group assign-vehicle">
+                                    <select class="form-select assign-vehicle" name="vehicle_assigned" required>
+                                        <option value="">Select from available...</option>
+                                        {% for vehicle in available_vehicles %}
+                                        <option value="{{ vehicle.name }}">{{ vehicle.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-lg"></i> Assign
+                                    </button>
+                                </div>
+                            </form>
+                            {% endif %}
+                            {% endif %}
                         {% endif %}
                     </div>
                 <hr>
